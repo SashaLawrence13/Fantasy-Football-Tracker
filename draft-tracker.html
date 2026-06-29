@@ -164,6 +164,20 @@
   td.delta-neg{color:var(--reach)}
   tr.dont-want td{opacity:.4;text-decoration:line-through}
   tr.taken td{opacity:.35}
+  tr.targeted td{background:#1b2c1f}
+  tr.targeted:hover td{background:#22372a}
+
+  /* Tier bands — left edge color by position-relative tier */
+  tr.tier-band-1 td:first-child{box-shadow:inset 3px 0 0 #5cd6a8}
+  tr.tier-band-2 td:first-child{box-shadow:inset 3px 0 0 #5aa6ff}
+  tr.tier-band-3 td:first-child{box-shadow:inset 3px 0 0 #f6c66b}
+  tr.tier-band-4 td:first-child{box-shadow:inset 3px 0 0 #bb86fc}
+  tr.tier-band-5 td:first-child{box-shadow:inset 3px 0 0 #9aa3b2}
+  .tier-num{display:inline-block;font-size:9px;background:var(--panel2);color:var(--muted);padding:1px 4px;border-radius:3px;margin-right:4px;font-weight:700;letter-spacing:.04em;font-variant-numeric:tabular-nums;cursor:pointer}
+  .tier-num:hover{background:#2a3551;color:var(--text)}
+  .rank-cell{display:flex;align-items:center;gap:4px}
+  .rank-btn{padding:0;background:transparent;border:1px solid var(--line);color:var(--muted);width:14px;height:14px;font-size:8px;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:3px;cursor:pointer}
+  .rank-btn:hover{background:var(--accent);color:#03121e;border-color:var(--accent)}
   .row-actions{display:flex;gap:4px;justify-content:flex-end}
   .row-actions button{padding:3px 7px;font-size:11px}
 
@@ -209,9 +223,8 @@
   .bbp-row button{padding:3px 8px;font-size:11px}
   .bbp-row .need-flag{color:var(--good);font-weight:700;font-size:10px}
 
-  /* All Teams */
-  .all-teams{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
-  @media (max-width:1300px){ .all-teams{grid-template-columns:repeat(3,1fr)} }
+  /* All Teams (responsive — fits any team count) */
+  .all-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}
   .team-card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:140px}
   .team-card.me{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
   .team-card .team-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--line)}
@@ -223,14 +236,33 @@
   .team-card .player-row .pname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .team-card .player-row .pround{color:var(--muted);font-size:10px}
   .team-card .empty-slot{color:var(--muted);font-size:11px;font-style:italic;padding:3px 0}
+  .grade-pill{display:inline-block;font-size:10px;font-weight:800;padding:1px 6px;border-radius:4px;background:var(--panel);border:1px solid var(--line);letter-spacing:.02em;font-variant-numeric:tabular-nums}
 
-  /* Draft board */
-  .board{display:grid;grid-template-columns:30px repeat(10,1fr);gap:3px;margin-top:14px;font-size:11px}
+  /* End-of-draft summary */
+  .eod-leaderboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
+  .eod-team{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+  .eod-team.me{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .eod-team.rank-1{background:linear-gradient(180deg,#2a2310,#1a1a26);border-color:#7a6633}
+  .eod-rank{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .eod-name{font-size:15px;font-weight:700}
+  .eod-grade{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.02em}
+  .eod-stat{font-size:11px;color:var(--muted)}
+  .eod-callouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+  .eod-callout{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .eod-callout .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+  .eod-callout .who{font-weight:700;margin-top:4px;font-size:13px}
+  .eod-callout .det{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* Draft board (columns set dynamically from state.teams) */
+  .board{display:grid;gap:3px;margin-top:14px;font-size:11px}
   .board .cell{background:var(--panel2);border:1px solid var(--line);padding:5px 6px;border-radius:5px;min-height:38px}
   .board .cell.me{outline:2px solid var(--accent);outline-offset:-2px}
   .board .cell.now{background:#2a1f10;border-color:var(--reach)}
   .board .cell .small{font-size:10px;color:var(--muted)}
   .board .head{background:transparent;border:0;color:var(--muted);text-align:center}
+  .board-pick-row{display:flex;align-items:center;gap:3px;line-height:1.15}
+  .board-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .board-grade{font-size:10px;font-weight:800;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.35);font-variant-numeric:tabular-nums;letter-spacing:-.02em;flex-shrink:0}
 
   /* Modal-ish drop zone */
   .drop{border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--muted);margin-bottom:8px}
@@ -255,6 +287,32 @@
 
   /* Empty state */
   .empty{padding:30px;text-align:center;color:var(--muted)}
+
+  /* Setup wizard overlay */
+  .wiz-overlay{
+    position:fixed;inset:0;background:rgba(11,15,23,.85);backdrop-filter:blur(6px);
+    z-index:100;display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  .wiz-overlay.on{display:flex}
+  .wiz{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:24px;max-width:580px;width:100%;max-height:88vh;overflow:auto;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);
+  }
+  .wiz h2{margin:0 0 4px;font-size:18px}
+  .wiz .sub{color:var(--muted);font-size:12px;margin-bottom:16px}
+  .wiz fieldset{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0}
+  .wiz legend{color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:0 6px}
+  .wiz-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .wiz-grid .field{display:flex;flex-direction:column;gap:4px}
+  .wiz-grid label{font-size:11px;color:var(--muted)}
+  .wiz-grid input{width:100%}
+  .wiz-roster{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .wiz-roster .field{display:flex;flex-direction:column;gap:3px;align-items:center}
+  .wiz-roster label{font-size:10px}
+  .wiz-roster input{width:100%;text-align:center}
+  .wiz-actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px}
+  .wiz-actions .primary{padding:10px 18px;font-size:14px}
 </style>
 </head>
 <body>
@@ -270,10 +328,59 @@
       <label class="muted">Rounds</label>
       <input type="number" id="rounds" min="10" max="20" value="16" />
       <button id="undoBtn" title="Undo last pick">Undo</button>
+      <button id="setupBtn" title="League setup">⚙ Setup</button>
       <button id="resetBtn" class="danger">Reset draft</button>
     </div>
   </div>
 </header>
+
+<!-- LEAGUE SETUP WIZARD -->
+<div id="wizOverlay" class="wiz-overlay">
+  <div class="wiz">
+    <h2>League Setup</h2>
+    <div class="sub">Configure your draft. Snake order and roster slots derive from these values.</div>
+
+    <fieldset>
+      <legend>Draft</legend>
+      <div class="wiz-grid">
+        <div class="field"><label>My slot</label><input type="number" id="wizSlot" min="1" max="20" /></div>
+        <div class="field"><label># of teams</label><input type="number" id="wizTeams" min="6" max="20" /></div>
+        <div class="field"><label># of rounds</label><input type="number" id="wizRounds" min="10" max="22" /></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Roster targets (per team)</legend>
+      <div class="wiz-roster">
+        <div class="field"><label>QB</label><input type="number" id="wizQB" min="0" max="4" /></div>
+        <div class="field"><label>RB</label><input type="number" id="wizRB" min="0" max="6" /></div>
+        <div class="field"><label>WR</label><input type="number" id="wizWR" min="0" max="6" /></div>
+        <div class="field"><label>TE</label><input type="number" id="wizTE" min="0" max="3" /></div>
+        <div class="field"><label>DEF</label><input type="number" id="wizDEF" min="0" max="2" /></div>
+        <div class="field"><label>K</label><input type="number" id="wizK" min="0" max="2" /></div>
+      </div>
+      <div class="wiz-roster" style="margin-top:10px">
+        <div class="field"><label>FLEX</label><input type="number" id="wizFLEX" min="0" max="4" title="RB/WR/TE eligible" /></div>
+        <div class="field"><label>Superflex</label><input type="number" id="wizSFLEX" min="0" max="2" title="QB/RB/WR/TE eligible" /></div>
+        <div class="field"><label>Bench</label><input type="number" id="wizBENCH" min="0" max="10" title="Depth players — any position" /></div>
+        <div class="field" style="grid-column:span 3;justify-content:center;text-align:center;font-size:10.5px;color:var(--muted);line-height:1.4">
+          FLEX = RB/WR/TE · Superflex = QB/RB/WR/TE.<br>
+          Bench = depth, any position.
+        </div>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:10px;padding:8px 10px;background:var(--panel2);border-radius:6px;display:flex;justify-content:space-between;align-items:center">
+        <span>Total roster spots:</span>
+        <b id="wizTotalRoster" style="color:var(--text);font-size:13px">—</b>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:6px">The engine fills starting positions first, then FLEX, then Superflex, then bench depth (best player available).</div>
+    </fieldset>
+
+    <div class="wiz-actions">
+      <button id="wizCancel" class="ghost">Cancel</button>
+      <button id="wizLaunch" class="primary">Launch Draft →</button>
+    </div>
+  </div>
+</div>
 
 <div id="app">
 
@@ -338,8 +445,46 @@
             <button id="sampleBtn" class="ghost">Load sample</button>
           </div>
           <div class="muted" style="font-size:11px;margin-top:8px">Columns: Player, Position, Your_Rank, ADP <span style="opacity:.7">(optional: Photo)</span></div>
+          <div style="margin-top:6px">
+            <button id="exportCsv" class="ghost" style="font-size:11px" title="Download your current rankings (with overrides and tiers) as a CSV">⬇ Export my rankings</button>
+          </div>
         </div>
         <div class="muted" id="dataStatus">No data loaded.</div>
+
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+          <div class="row" style="justify-content:space-between;margin-bottom:6px">
+            <div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em">ESPN draft rank (optional)</div>
+            <span id="espnStatus" class="muted" style="font-size:11px">Not loaded</span>
+          </div>
+          <div class="row" style="gap:6px">
+            <input type="file" id="espnFile" accept=".csv,text/csv" style="display:none" />
+            <button onclick="document.getElementById('espnFile').click()" style="font-size:11px">Upload ESPN ranks CSV</button>
+            <button id="clearEspn" class="ghost" style="font-size:11px">Clear</button>
+          </div>
+          <div class="muted" style="font-size:10.5px;margin-top:6px">Needs columns: Player + ESPN rank. The board adds an ESPN column and Δ (your rank − ESPN) — positive Δ = you can wait, ESPN drafts them later.</div>
+        </div>
+
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+          <div class="row" style="justify-content:space-between;margin-bottom:6px">
+            <div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em">Position-specific rankings (optional)</div>
+            <span id="posCsvStatus" class="muted" style="font-size:11px">Not loaded</span>
+          </div>
+          <div class="row" style="gap:6px">
+            <select id="posCsvPick" style="font-size:11px;padding:4px 6px">
+              <option value="AUTO">Auto-detect</option>
+              <option value="QB">QB only</option>
+              <option value="RB">RB only</option>
+              <option value="WR">WR only</option>
+              <option value="TE">TE only</option>
+              <option value="DEF">DEF only</option>
+              <option value="K">K only</option>
+            </select>
+            <input type="file" id="posCsvFile" accept=".csv,text/csv" style="display:none" />
+            <button onclick="document.getElementById('posCsvFile').click()" style="font-size:11px">Upload</button>
+          </div>
+          <div class="muted" style="font-size:10.5px;margin-top:6px">Use a different expert for a single position. The position keeps its slot positions; only the order within shuffles. Needs: Player + Rank.</div>
+        </div>
+
         <div id="colMapping" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
           <div class="row" style="justify-content:space-between;margin-bottom:6px">
             <div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em">Column mapping</div>
@@ -374,6 +519,8 @@
                 <th class="sortable" data-sort="name">Player<span class="arrow"></span></th>
                 <th class="sortable" data-sort="pos">Pos<span class="arrow"></span></th>
                 <th class="sortable" data-sort="adp">ADP<span class="arrow"></span></th>
+                <th class="sortable" data-sort="espn" title="ESPN draft rank (upload separate CSV)">ESPN<span class="arrow"></span></th>
+                <th class="sortable" data-sort="espnDelta" title="Your rank − ESPN rank. Positive = wait, ESPN drafts later">ΔE<span class="arrow"></span></th>
                 <th class="sortable" data-sort="delta">Δ<span class="arrow"></span></th>
                 <th>Flag</th>
                 <th></th>
@@ -434,6 +581,12 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- END-OF-DRAFT SUMMARY (shown only when draft fills up) -->
+  <div id="endOfDraft" class="panel" style="margin-top:14px;display:none;border-color:#5a4717;background:linear-gradient(180deg,#231d12,#1a1a26)">
+    <h2 style="color:var(--warn)">🏆 Draft Complete — Final Grades</h2>
+    <div id="endOfDraftBody"></div>
   </div>
 
   <!-- ALL TEAMS DASHBOARD -->
@@ -560,8 +713,30 @@ Cameron Dicker,K,105,158.2`;
    STATE
    ============================================================ */
 const STORAGE_KEY = 'ff-draft-tracker-v1';
-const defaultTargets = {QB:1, RB:2, WR:3, TE:1, DEF:1, K:1};
+const defaultTargets = {QB:1, RB:2, WR:3, TE:1, FLEX:1, SFLEX:0, DEF:1, K:1, BENCH:6};
 const POS_ORDER = ['QB','RB','WR','TE','DEF','K'];
+// Eligibility sets for flex slots
+const FLEX_ELIGIBLE  = new Set(['RB','WR','TE']);
+const SFLEX_ELIGIBLE = new Set(['QB','RB','WR','TE']);
+
+// Pick-value grade — letter + numeric delta. Positive value = pick made later than expected (steal).
+// Baseline = ADP (market consensus); falls back to your rank if ADP missing.
+// ADP has real mock-draft variance, so picks naturally land ±a few ranks → fair grading.
+function pickGrade(overall, player){
+  if (!player) return {letter:'—', color:'var(--muted)', value:0};
+  const baseline = (player.adp != null && !isNaN(player.adp)) ? player.adp : player.rank;
+  const value = overall - baseline; // positive = drafted later than ADP = value
+  let letter, color;
+  if (value >= 10)      { letter='A+'; color='var(--good)';   }
+  else if (value >= 5)  { letter='A';  color='var(--good)';   }
+  else if (value >= 2)  { letter='A-'; color='var(--good)';   }
+  else if (value >= -1) { letter='B+'; color='var(--accent)'; }
+  else if (value >= -4) { letter='B';  color='var(--accent)'; }
+  else if (value >= -8) { letter='C';  color='var(--warn)';   }
+  else if (value >= -15){ letter='D';  color='var(--reach)';  }
+  else                  { letter='F';  color='var(--bad)';    }
+  return { letter, color, value };
+}
 
 // Position value-density: how steep the production curve is.
 // Higher = production drops faster within position, so a rank drop matters more.
@@ -574,7 +749,8 @@ let state = loadState() || {
   players: [],
   picks: [],            // [{overall, round, slot, playerId}]
   targets: {...defaultTargets},
-  dontWant: {},          // playerId -> true
+  dontWant: {},          // playerId -> true (Fade)
+  target: {},            // playerId -> true (positive Target)
   slot: 5,
   teams: 10,
   rounds: 16,
@@ -582,11 +758,17 @@ let state = loadState() || {
   search: '',
   hideDW: true,
   sortCol: 'rank',
-  sortDir: 'asc'         // 'asc' | 'desc'
+  sortDir: 'asc',        // 'asc' | 'desc'
+  setupDone: false       // first-launch wizard
 };
 // Migrate older saved state
+if (!state.target) state.target = {};
+if (typeof state.setupDone === 'undefined') state.setupDone = !!state.players.length;
 if (!state.sortCol) state.sortCol = 'rank';
 if (!state.sortDir) state.sortDir = 'asc';
+if (typeof state.targets.FLEX === 'undefined') state.targets.FLEX = 0;
+if (typeof state.targets.SFLEX === 'undefined') state.targets.SFLEX = 0;
+if (typeof state.targets.BENCH === 'undefined') state.targets.BENCH = 6;
 
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
 function loadState(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ return null; } }
@@ -753,6 +935,34 @@ function needsMap(){
   for (const pos of POS_ORDER) out[pos] = Math.max(0, (state.targets[pos]||0) - (have[pos]||0));
   return out;
 }
+
+// FLEX / Superflex accounting.
+// Players "excess" at a position (have - target) cascade into FLEX, then Superflex slots.
+// Returns: {flexHave, flexNeed, sflexHave, sflexNeed}
+function flexMap(){
+  const have = countByPos(getMyRoster());
+  const excess = {};
+  for (const pos of POS_ORDER) excess[pos] = Math.max(0, (have[pos]||0) - (state.targets[pos]||0));
+  const flexEligibleExcess = (excess.RB||0) + (excess.WR||0) + (excess.TE||0);
+  const flexTarget = state.targets.FLEX || 0;
+  const flexHave = Math.min(flexTarget, flexEligibleExcess);
+  const flexNeed = Math.max(0, flexTarget - flexHave);
+  const remainingAfterFlex = flexEligibleExcess - flexHave; // RB/WR/TE excess still uncategorized
+  const sflexEligibleExcess = (excess.QB||0) + remainingAfterFlex;
+  const sflexTarget = state.targets.SFLEX || 0;
+  const sflexHave = Math.min(sflexTarget, sflexEligibleExcess);
+  const sflexNeed = Math.max(0, sflexTarget - sflexHave);
+  return { flexHave, flexNeed, sflexHave, sflexNeed };
+}
+
+// Effective need for a position INCLUDING flex contributions.
+// A position's effective need is its base need + share of unfilled flex/sflex slots it can fill.
+function effectiveNeed(pos, baseNeeds, flex){
+  let need = baseNeeds[pos] || 0;
+  if (FLEX_ELIGIBLE.has(pos))  need += flex.flexNeed;
+  if (SFLEX_ELIGIBLE.has(pos)) need += flex.sflexNeed * 0.7; // sflex is softer since QB also eligible
+  return need;
+}
 function availablePlayers(includeDontWant=false){
   const drafted = getDrafted();
   return state.players.filter(p => {
@@ -776,6 +986,10 @@ function strategySignals(){
   const pun = picksUntilMyNext();
   if (!pun) return null;
   const needs = needsMap();
+  const flex = flexMap();
+  // Effective needs include FLEX/Superflex contributions
+  const effNeeds = {};
+  for (const pos of POS_ORDER) effNeeds[pos] = effectiveNeed(pos, needs, flex);
   const avail = availablePlayers();
   const cur = currentOverall();
 
@@ -833,10 +1047,11 @@ function strategySignals(){
   // Rank drops are weighted by POS_VALUE_DENSITY so RB/TE scarcity (steep cliffs) counts more
   // per rank than WR/QB (flatter curves). Won't force RB-heavy because density only multiplies
   // an existing drop — if there's no drop, no boost.
-  const needPos = POS_ORDER.filter(p => needs[p] > 0);
+  // Use effective needs (base + flex + sflex) so RB/WR/TE/QB stay relevant for flex slots
+  const needPos = POS_ORDER.filter(p => effNeeds[p] > 0);
   const urgencyOf = (p) => {
     const density = POS_VALUE_DENSITY[p] || 1.0;
-    return (needs[p] * 4) + ((costs[p]?.drop || 0) * density) + (scarcity[p].urgency * 1.5);
+    return (effNeeds[p] * 4) + ((costs[p]?.drop || 0) * density) + (scarcity[p].urgency * 1.5);
   };
   needPos.sort((a,b)=> urgencyOf(b) - urgencyOf(a));
 
@@ -899,7 +1114,7 @@ function strategySignals(){
     }
   }
 
-  return { needs, costs, bestNow, bestNext, bestNext2, gap1, gap2, banner, falling, avail, myNext1, myNext2, scarcity, needPos, urgencyOf };
+  return { needs, effNeeds, flex, costs, bestNow, bestNext, bestNext2, gap1, gap2, banner, falling, avail, myNext1, myNext2, scarcity, needPos, urgencyOf };
 }
 
 /* ============================================================
@@ -908,7 +1123,9 @@ function strategySignals(){
 function getRecs(sig){
   // Top-3 composite AI scoring: Need + Value + Rank + Scarcity
   if (!sig) return [];
-  const needs = sig.needs;
+  const needs = sig.effNeeds || sig.needs;  // include FLEX/SFLEX contributions
+  const baseNeeds = sig.needs;
+  const flex = sig.flex || {flexNeed:0, sflexNeed:0};
   const avail = sig.avail;
   const cur = currentOverall();
   const teams = state.teams;
@@ -937,17 +1154,25 @@ function getRecs(sig){
       ? Math.min(30, drop * density + tierAlarm * 1.5)
       : Math.min(12, drop * density * 0.4 + tierAlarm * 0.6);
 
-    const total = needScore + valueScore + rankScore + scarcityScore;
+    // Target bonus — give starred players a meaningful boost so they surface in top-3 when appropriate
+    const targetBonus = (state.target && state.target[p.id]) ? 12 : 0;
+
+    const total = needScore + valueScore + rankScore + scarcityScore + targetBonus;
 
     // ============ PROS / CONS ============
     const pros = [];
     const cons = [];
 
-    // Need
-    if (needGap > 0){
-      pros.push(`Fills your ${p.pos} need (${have[p.pos]||0}/${state.targets[p.pos]||0} drafted, ${needGap} to go)`);
+    // Need — explain whether they're filling a base, FLEX, or Superflex slot
+    const baseGap = baseNeeds[p.pos] || 0;
+    if (baseGap > 0){
+      pros.push(`Fills your ${p.pos} need (${have[p.pos]||0}/${state.targets[p.pos]||0} drafted, ${baseGap} to go)`);
+    } else if (FLEX_ELIGIBLE.has(p.pos) && flex.flexNeed > 0){
+      pros.push(`Fills your FLEX slot (RB/WR/TE) — ${flex.flexNeed} FLEX still open`);
+    } else if (SFLEX_ELIGIBLE.has(p.pos) && flex.sflexNeed > 0){
+      pros.push(`Fills your Superflex slot (QB/RB/WR/TE) — ${flex.sflexNeed} Superflex still open`);
     } else if ((state.targets[p.pos]||0) > 0){
-      cons.push(`Position already filled — you have ${have[p.pos]||0}/${state.targets[p.pos]||0} ${p.pos}s`);
+      cons.push(`Position already filled — you have ${have[p.pos]||0}/${state.targets[p.pos]||0} ${p.pos}s and no FLEX slot needs it`);
     }
 
     // Value (ADP)
@@ -1004,6 +1229,11 @@ function getRecs(sig){
       cons.push(`You marked this player as Don't-Want`);
     }
 
+    // Target flag pro
+    if (state.target && state.target[p.id]){
+      pros.push(`⭐ You flagged this player as a Target`);
+    }
+
     // If no specific pros, at least one fallback
     if (pros.length === 0){
       pros.push(`Best player available at fair value vs your ranking`);
@@ -1047,6 +1277,7 @@ function render(){
   renderAllTeams();
   renderPickBar();
   renderUrgency(sig);
+  renderEndOfDraft();
 }
 
 function renderHeader(){
@@ -1085,6 +1316,7 @@ function renderRoster(){
 
 function renderTargets(){
   const have = countByPos(getMyRoster());
+  const flex = flexMap();
   const c = el('targets');
   let html = '';
   for (const pos of POS_ORDER){
@@ -1097,6 +1329,41 @@ function renderTargets(){
       <div class="progress"><div class="fill ${cls}" style="width:${pct}%"></div></div>
       <span class="row" style="gap:4px"><b>${got}</b><span class="muted">/</span>
         <input type="number" min="0" max="6" value="${target}" data-target-pos="${pos}" />
+      </span>
+    </div>`;
+  }
+  // FLEX / SFLEX rows
+  const flexSlots = [
+    { key:'FLEX',  label:'FLEX',     have: flex.flexHave,  hint:'RB / WR / TE' },
+    { key:'SFLEX', label:'SUPER',    have: flex.sflexHave, hint:'QB / RB / WR / TE' }
+  ];
+  for (const f of flexSlots){
+    const target = state.targets[f.key] ?? 0;
+    if (target === 0 && f.have === 0) continue; // hide if not used
+    const pct = target ? Math.min(100, (f.have/target)*100) : 0;
+    const cls = f.have >= target ? '' : (target - f.have >= 2 ? 'bad' : 'warn');
+    html += `<div class="target-row" title="${f.hint}">
+      <span><span class="pos" style="background:linear-gradient(135deg,#5cd6a8,#5aa6ff);color:#0b0f17;padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:700">${f.label}</span></span>
+      <div class="progress"><div class="fill ${cls}" style="width:${pct}%"></div></div>
+      <span class="row" style="gap:4px"><b>${f.have}</b><span class="muted">/</span>
+        <input type="number" min="0" max="4" value="${target}" data-target-pos="${f.key}" />
+      </span>
+    </div>`;
+  }
+  // BENCH row — depth = picks beyond all starting/flex slots
+  const benchTarget = state.targets.BENCH ?? 0;
+  if (benchTarget > 0){
+    const totalStarters = ['QB','RB','WR','TE','DEF','K'].reduce((s,p)=>s+(state.targets[p]||0),0)
+                          + (state.targets.FLEX||0) + (state.targets.SFLEX||0);
+    const totalPicked = Object.values(have).reduce((s,v)=>s+v,0);
+    const benchHave = Math.max(0, totalPicked - totalStarters);
+    const benchClamp = Math.min(benchTarget, benchHave);
+    const pct = benchTarget ? Math.min(100, (benchClamp/benchTarget)*100) : 0;
+    html += `<div class="target-row" title="Depth — any position">
+      <span><span class="pos" style="background:#3a4663;color:#e6ecf5;padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:700">BENCH</span></span>
+      <div class="progress"><div class="fill" style="width:${pct}%;background:#3a4663"></div></div>
+      <span class="row" style="gap:4px"><b>${benchHave}</b><span class="muted">/</span>
+        <input type="number" min="0" max="10" value="${benchTarget}" data-target-pos="BENCH" />
       </span>
     </div>`;
   }
@@ -1140,12 +1407,15 @@ function renderAvailable(){
   // Apply sort
   const POS_PRIORITY = {QB:1, RB:2, WR:3, TE:4, DEF:5, K:6};
   const cur = currentOverall();
+  const espnOf = p => (p.espnRank != null ? p.espnRank : 999);
   const sortFns = {
     rank:  (a,b) => a.rank - b.rank,
     name:  (a,b) => a.name.localeCompare(b.name),
     pos:   (a,b) => (POS_PRIORITY[a.pos]||9) - (POS_PRIORITY[b.pos]||9) || a.rank - b.rank,
     adp:   (a,b) => a.adp - b.adp,
-    delta: (a,b) => (a.adp - a.rank) - (b.adp - b.rank)
+    delta: (a,b) => (a.adp - a.rank) - (b.adp - b.rank),
+    espn:  (a,b) => espnOf(a) - espnOf(b),
+    espnDelta: (a,b) => ((espnOf(a) - a.rank) - (espnOf(b) - b.rank))
   };
   const cmp = sortFns[state.sortCol] || sortFns.rank;
   list.sort((a,b) => state.sortDir === 'desc' ? cmp(b,a) : cmp(a,b));
@@ -1163,6 +1433,20 @@ function renderAvailable(){
   // detect tier breaks (gap of >= 6 rank within same position)
   const lastRankByPos = {};
   let html = '';
+  // Compute position-relative tier per player. Tier 1 = top 12 within position, Tier 2 = 13-24, etc.
+  // Used for the left tier-band color and tier number badge. Respects manual override.
+  const tierForPlayer = (p) => {
+    if (state.tierOverride && state.tierOverride[p.id]) return state.tierOverride[p.id];
+    const allAtPos = state.players.filter(x => x.pos === p.pos).sort((a,b)=>a.rank-b.rank);
+    const idx = allAtPos.findIndex(x => x.id === p.id);
+    const tierSize = (p.pos==='QB'||p.pos==='TE'||p.pos==='DEF'||p.pos==='K') ? 6 : 12;
+    return Math.floor(idx / tierSize) + 1;
+  };
+
+  // Whose turn is it right now? — used to label the single Draft button correctly.
+  const onClockSlot = pickToSlot(cur, state.teams).slot;
+  const onClockLabel = onClockSlot === state.slot ? 'Me' : `T${onClockSlot}`;
+
   for (const p of list){
     const delta = p.adp - p.rank; // positive = falling (still here past ADP)
     const adpDeltaFromPick = cur - p.adp; // positive = past their ADP
@@ -1174,27 +1458,45 @@ function renderAvailable(){
     const tierBreak = lastRankByPos[p.pos] && (p.rank - lastRankByPos[p.pos]) >= 8 ? 'tier-break' : '';
     lastRankByPos[p.pos] = p.rank;
     const dw = state.dontWant[p.id] ? 'dont-want' : '';
-    html += `<tr class="${dw} ${tierBreak}">
-      <td>${p.rank}</td>
-      <td><div class="player-cell">${avatarHTML(p)}<b class="pname">${p.name}</b></div></td>
+    const targeted = state.target && state.target[p.id] ? 'targeted' : '';
+    const tier = tierForPlayer(p);
+    const espn = p.espnRank;
+    const espnDelta = (espn != null) ? (espn - p.rank) : null;  // positive = ESPN drafts later → you can wait
+    html += `<tr class="${dw} ${targeted} ${tierBreak} tier-band-${Math.min(tier,5)}" data-row-id="${p.id}">
+      <td>
+        <div class="rank-cell">
+          <button class="rank-btn" data-bump="${p.id}" data-dir="-1" title="Move up (better rank)">▲</button>
+          <button class="rank-btn" data-bump="${p.id}" data-dir="1" title="Move down (worse rank)">▼</button>
+          <span class="tier-num" data-tier-edit="${p.id}" title="Click to edit tier">T${tier}</span>
+          <span>${p.rank}</span>
+        </div>
+      </td>
+      <td><div class="player-cell">${avatarHTML(p)}<b class="pname">${p.name}</b>${state.target&&state.target[p.id]?' <span title="Target">⭐</span>':''}</div></td>
       <td><span class="pos ${p.pos}">${p.pos}</span></td>
       <td>${p.adp.toFixed(1)}</td>
+      <td class="${espn==null?'muted':''}">${espn==null?'—':espn}</td>
+      <td class="${espnDelta==null?'muted':espnDelta>0?'delta-pos':espnDelta<0?'delta-neg':''}">${espnDelta==null?'—':(espnDelta>0?'+':'')+espnDelta}</td>
       <td class="${delta>0?'delta-pos':delta<0?'delta-neg':''}">${delta>0?'+':''}${delta.toFixed(1)}</td>
       <td>${flagHtml}</td>
       <td class="row-actions">
-        <button class="primary" data-draft-me="${p.id}" title="Draft for me">Me</button>
-        <button data-draft-taken="${p.id}" title="Mark drafted by other team">Taken</button>
-        <button class="ghost" data-toggle-dw="${p.id}" title="Don't want">${state.dontWant[p.id]?'↺':'🚫'}</button>
+        <button class="primary" data-draft="${p.id}" title="Draft to current pick (${onClockLabel})">Draft</button>
+        <button class="ghost" data-toggle-target="${p.id}" title="Mark as Target">${state.target&&state.target[p.id]?'★':'☆'}</button>
+        <button class="ghost" data-toggle-dw="${p.id}" title="Don't want / Fade">${state.dontWant[p.id]?'↺':'🚫'}</button>
       </td>
     </tr>`;
   }
-  el('availBody').innerHTML = html || '<tr><td colspan="7" class="empty">No matching players.</td></tr>';
+  el('availBody').innerHTML = html || '<tr><td colspan="9" class="empty">No matching players.</td></tr>';
 
-  el('availBody').querySelectorAll('[data-draft-me]').forEach(b=>{
-    b.addEventListener('click', e=>logPick(e.currentTarget.dataset.draftMe, 'me'));
+  el('availBody').querySelectorAll('[data-draft]').forEach(b=>{
+    b.addEventListener('click', e=>logPick(e.currentTarget.dataset.draft));
   });
-  el('availBody').querySelectorAll('[data-draft-taken]').forEach(b=>{
-    b.addEventListener('click', e=>logPick(e.currentTarget.dataset.draftTaken, 'other'));
+  el('availBody').querySelectorAll('[data-toggle-target]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const id = e.currentTarget.dataset.toggleTarget;
+      if (!state.target) state.target = {};
+      if (state.target[id]) delete state.target[id]; else state.target[id] = true;
+      render();
+    });
   });
   el('availBody').querySelectorAll('[data-toggle-dw]').forEach(b=>{
     b.addEventListener('click', e=>{
@@ -1203,11 +1505,83 @@ function renderAvailable(){
       render();
     });
   });
+  // ↑/↓ rank bump — swap ranks with adjacent player
+  el('availBody').querySelectorAll('[data-bump]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const id = e.currentTarget.dataset.bump;
+      const dir = parseInt(e.currentTarget.dataset.dir, 10);
+      bumpPlayerRank(id, dir);
+    });
+  });
+  // Tier number — click to edit
+  el('availBody').querySelectorAll('[data-tier-edit]').forEach(span=>{
+    span.addEventListener('click', e=>{
+      const id = e.currentTarget.dataset.tierEdit;
+      const cur = state.tierOverride && state.tierOverride[id] ? state.tierOverride[id] : '';
+      const v = prompt(`Set tier for this player (1-9). Leave blank to clear override:`, cur);
+      if (v === null) return;
+      const n = parseInt(v, 10);
+      if (!state.tierOverride) state.tierOverride = {};
+      if (v === '' || isNaN(n)) delete state.tierOverride[id];
+      else state.tierOverride[id] = Math.max(1, Math.min(9, n));
+      render();
+    });
+  });
+}
+
+// Swap a player's rank with the next-better (dir=-1) or next-worse (dir=+1) player.
+function bumpPlayerRank(id, dir){
+  const sorted = [...state.players].sort((a,b)=>a.rank-b.rank);
+  const idx = sorted.findIndex(p => p.id === id);
+  if (idx < 0) return;
+  const targetIdx = idx + dir;
+  if (targetIdx < 0 || targetIdx >= sorted.length) return;
+  const a = sorted[idx];
+  const b = sorted[targetIdx];
+  const tmp = a.rank;
+  a.rank = b.rank;
+  b.rank = tmp;
+  render();
+}
+
+// Export current rankings as a CSV (preserves your overrides, tiers, and don't-want flags)
+function exportRankingsCSV(){
+  if (!state.players.length) return;
+  const sorted = [...state.players].sort((a,b)=>a.rank-b.rank);
+  const headers = ['Player','Position','Your_Rank','ADP','ESPN_Rank','Tier','Photo','Flag'];
+  const rows = [headers.join(',')];
+  for (const p of sorted){
+    const tier = (state.tierOverride && state.tierOverride[p.id]) ? state.tierOverride[p.id] : '';
+    let flag = '';
+    if (state.target && state.target[p.id]) flag = 'Target';
+    else if (state.dontWant && state.dontWant[p.id]) flag = 'Fade';
+    const csv = [
+      `"${p.name.replace(/"/g,'""')}"`,
+      p.pos,
+      p.rank,
+      p.adp.toFixed(1),
+      p.espnRank ?? '',
+      tier,
+      p.photo || '',
+      flag
+    ].join(',');
+    rows.push(csv);
+  }
+  const blob = new Blob([rows.join('\n')], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const today = new Date().toISOString().slice(0,10);
+  a.download = `my-rankings-${today}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function renderBoard(){
   const board = el('board');
   const teams = state.teams;
+  // Dynamic columns: 30px row label + N team columns
+  board.style.gridTemplateColumns = `30px repeat(${teams}, 1fr)`;
   const totalRounds = Math.min(state.rounds, Math.ceil((state.picks.length+teams) / teams));
   const showRounds = Math.max(8, totalRounds);
   let html = '<div class="head"></div>';
@@ -1223,7 +1597,10 @@ function renderBoard(){
       let inner = `<div class="small">${overall}</div>`;
       if (pick){
         const player = state.players.find(p=>p.id===pick.playerId);
-        if (player) inner += `<div><span class="pos ${player.pos}">${player.pos}</span> ${player.name.split(' ').slice(-1)[0]}</div>`;
+        if (player){
+          const g = pickGrade(pick.overall, player);
+          inner += `<div class="board-pick-row"><span class="pos ${player.pos}">${player.pos}</span> <span class="board-name">${player.name.split(' ').slice(-1)[0]}</span> <span class="board-grade" style="color:${g.color}" title="Pick ${pick.overall} · rank #${player.rank} · value ${g.value>0?'+':''}${g.value}">${g.letter}</span></div>`;
+        }
       } else if (isNow){
         inner += `<div class="muted">ON CLOCK</div>`;
       }
@@ -1376,19 +1753,32 @@ function renderAllTeams(){
     for (const pos of POS_ORDER){
       if (!grouped[pos]) continue;
       for (const x of grouped[pos]){
+        const g = pickGrade(x.overall, x.player);
         playersHtml += `<div class="player-row">
           ${avatarHTML(x.player,'sm')}
           <span class="pos ${pos}">${pos}</span>
           <span class="pname" title="${x.player.name}">${x.player.name}</span>
+          <span class="grade-pill" style="color:${g.color}" title="Pick value: ${g.value>0?'+':''}${g.value}">${g.letter}</span>
           <span class="pround">R${x.round}</span>
         </div>`;
       }
     }
     if (!playersHtml) playersHtml = '<div class="empty-slot">No picks yet</div>';
+    // Team draft grade — average pick value over all picks
+    let avgValue = 0, gpaLetter = '—', gpaColor = 'var(--muted)';
+    if (picks.length){
+      const sum = picks.reduce((acc,x) => acc + pickGrade(x.overall, x.player).value, 0);
+      avgValue = sum / picks.length;
+      const gpa = pickGrade(0, { rank: -avgValue }); // reuse thresholds via inverse
+      gpaLetter = gpa.letter; gpaColor = gpa.color;
+    }
     html += `<div class="team-card ${isMe ? 'me' : ''}">
       <div class="team-head">
         <span class="team-name">Team ${s}${isMe ? ' (You)' : ''}</span>
-        <span class="muted" style="font-size:11px">${picks.length} pick${picks.length===1?'':'s'}</span>
+        <span class="row" style="gap:6px;font-size:11px;color:var(--muted)">
+          ${picks.length ? `<span class="grade-pill" style="color:${gpaColor}" title="Avg pick value: ${avgValue>0?'+':''}${avgValue.toFixed(1)}">${gpaLetter}</span>` : ''}
+          <span>${picks.length} pick${picks.length===1?'':'s'}</span>
+        </span>
       </div>
       ${posLine ? `<div class="team-pos-line">${posLine}</div>` : ''}
       ${playersHtml}
@@ -1437,19 +1827,111 @@ function renderPickInput(sig){
   el('currentPickLabel').textContent = `R${round}.${String(((cur-1)%state.teams)+1).padStart(2,'0')} (Pick ${cur}, ${isMine?'YOUR PICK':`Team ${slot}`})`;
 }
 
+function renderEndOfDraft(){
+  const total = state.teams * state.rounds;
+  const isComplete = state.picks.length >= total && state.picks.length > 0;
+  const panel = el('endOfDraft');
+  if (!isComplete){ panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+
+  // Compute per-team stats
+  const teamStats = [];
+  for (let s=1; s<=state.teams; s++){
+    const picks = state.picks.filter(p => p.slot === s).map(p => ({
+      pick: p, player: state.players.find(pl => pl.id === p.playerId)
+    })).filter(x => x.player);
+    if (!picks.length) continue;
+    const grades = picks.map(x => pickGrade(x.pick.overall, x.player));
+    const sum = grades.reduce((acc, g) => acc + g.value, 0);
+    const avg = sum / picks.length;
+    const teamGpa = pickGrade(0, { rank: -avg });
+    teamStats.push({ slot:s, picks, avg, gpa: teamGpa });
+  }
+  teamStats.sort((a,b) => b.avg - a.avg);
+
+  // Best / worst individual picks across the whole draft
+  let bestPick = null, worstPick = null;
+  for (const p of state.picks){
+    const player = state.players.find(pl => pl.id === p.playerId);
+    if (!player) continue;
+    const g = pickGrade(p.overall, player);
+    if (!bestPick  || g.value > bestPick.value)  bestPick  = { pick: p, player, ...g };
+    if (!worstPick || g.value < worstPick.value) worstPick = { pick: p, player, ...g };
+  }
+
+  // Render leaderboard
+  let html = '<div class="eod-leaderboard">';
+  teamStats.forEach((t, idx) => {
+    const rank = idx + 1;
+    const isMe = t.slot === state.slot;
+    html += `<div class="eod-team ${isMe?'me':''} rank-${rank}">
+      <div class="eod-rank">#${rank}${rank===1?' 🏆':''}${isMe?' · YOU':''}</div>
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div class="eod-name">Team ${t.slot}</div>
+        <div class="eod-grade" style="color:${t.gpa.color}">${t.gpa.letter}</div>
+      </div>
+      <div class="eod-stat">${t.picks.length} picks · avg value ${t.avg>0?'+':''}${t.avg.toFixed(1)}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Callouts
+  html += '<div class="eod-callouts">';
+  if (teamStats[0]){
+    const mvp = teamStats[0];
+    html += `<div class="eod-callout">
+      <div class="lbl">🏆 MVP Team</div>
+      <div class="who">Team ${mvp.slot}${mvp.slot===state.slot?' (You)':''} — Grade ${mvp.gpa.letter}</div>
+      <div class="det">Avg pick value ${mvp.avg>0?'+':''}${mvp.avg.toFixed(1)} ranks ahead of pick number</div>
+    </div>`;
+  }
+  if (bestPick){
+    const {round} = pickToSlot(bestPick.pick.overall, state.teams);
+    html += `<div class="eod-callout">
+      <div class="lbl">💎 Best pick of the draft</div>
+      <div class="who"><span class="pos ${bestPick.player.pos}">${bestPick.player.pos}</span> ${bestPick.player.name}</div>
+      <div class="det">Team ${bestPick.pick.slot} · Pick ${bestPick.pick.overall} (R${round}) · ranked #${bestPick.player.rank} → value +${bestPick.value}</div>
+    </div>`;
+  }
+  if (worstPick && worstPick.value < 0){
+    const {round} = pickToSlot(worstPick.pick.overall, state.teams);
+    html += `<div class="eod-callout">
+      <div class="lbl">🤔 Biggest reach</div>
+      <div class="who"><span class="pos ${worstPick.player.pos}">${worstPick.player.pos}</span> ${worstPick.player.name}</div>
+      <div class="det">Team ${worstPick.pick.slot} · Pick ${worstPick.pick.overall} (R${round}) · ranked #${worstPick.player.rank} → value ${worstPick.value}</div>
+    </div>`;
+  }
+  // Your placement
+  const yourRank = teamStats.findIndex(t => t.slot === state.slot) + 1;
+  if (yourRank > 0){
+    html += `<div class="eod-callout">
+      <div class="lbl">📊 Your finish</div>
+      <div class="who">${yourRank}${ord(yourRank)} of ${teamStats.length}</div>
+      <div class="det">Out-drafted ${teamStats.length - yourRank} team${teamStats.length-yourRank===1?'':'s'} based on pick-value math.</div>
+    </div>`;
+  }
+  html += '</div>';
+  el('endOfDraftBody').innerHTML = html;
+}
+function ord(n){ const s=['th','st','nd','rd'], v=n%100; return s[(v-20)%10]||s[v]||s[0]; }
+
 function renderUrgency(sig){
   const c = el('urgency');
   if (!c) return;
   if (!sig){ c.innerHTML = '<div class="muted" style="font-size:12px">No data.</div>'; return; }
   const teams = state.teams;
-  // Score each position with the same urgency formula the banner uses
+  // Score each position with effective needs (incl. FLEX/SFLEX)
+  const effNeeds = sig.effNeeds || sig.needs;
+  const flex = sig.flex || {flexNeed:0, sflexNeed:0, flexHave:0, sflexHave:0};
   const rows = POS_ORDER.map(pos => {
-    const need = sig.needs[pos] || 0;
+    const need = effNeeds[pos] || 0;
+    const baseNeed = sig.needs[pos] || 0;
+    const flexShare = need - baseNeed;
     const drop = sig.costs[pos]?.drop || 0;
     const sc = sig.scarcity[pos] || {startersLeft:0, tierTotal:0, urgency:0};
     const density = POS_VALUE_DENSITY[pos] || 1.0;
     const score = (need * 4) + (drop * density) + (sc.urgency * 1.5);
-    return { pos, need, drop, sc, score, density };
+    return { pos, need, baseNeed, flexShare, drop, sc, score, density };
   }).sort((a,b)=>b.score - a.score);
   const max = Math.max(20, rows[0].score);
   let html = '';
@@ -1457,15 +1939,35 @@ function renderUrgency(sig){
     const pct = Math.min(100, (r.score / max) * 100);
     const topCls = r.score >= max * 0.8 && r.need > 0 ? 'top' : '';
     const tierAlarm = r.sc.startersLeft <= teams && r.need > 0;
+    const needLabel = r.flexShare > 0
+      ? `<b style="color:var(--text)">${r.baseNeed}</b><span class="muted" style="font-size:9px">+${r.flexShare.toFixed(1)}F</span>`
+      : `<b style="color:var(--text)">${r.baseNeed}</b>`;
     html += `<div class="urg-row ${topCls}">
       <span><span class="pos ${r.pos}">${r.pos}</span></span>
       <div class="urg-bar"><div class="urg-fill" style="width:${pct}%"></div></div>
       <span class="urg-stats">
-        need <b style="color:var(--text)">${r.need}</b> ·
+        need ${needLabel} ·
         drop <b style="color:var(--text)">${r.drop}</b> ·
-        <span class="${tierAlarm?'alert':''}">${r.sc.startersLeft}/${r.sc.tierTotal} starters</span>
+        <span class="${tierAlarm?'alert':''}">${r.sc.startersLeft}/${r.sc.tierTotal}</span>
       </span>
     </div>`;
+  }
+  // FLEX / SFLEX summary
+  if ((state.targets.FLEX||0) > 0 || (state.targets.SFLEX||0) > 0){
+    let flexInfo = '';
+    if ((state.targets.FLEX||0) > 0){
+      flexInfo += `<div style="font-size:11px;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);color:var(--muted)">
+        <b style="color:${flex.flexNeed>0?'var(--reach)':'var(--good)'}">FLEX</b>
+        ${flex.flexHave}/${state.targets.FLEX} filled — needs ${flex.flexNeed > 0 ? `<b style="color:var(--text)">${flex.flexNeed}</b> more RB/WR/TE` : 'none'}
+      </div>`;
+    }
+    if ((state.targets.SFLEX||0) > 0){
+      flexInfo += `<div style="font-size:11px;color:var(--muted)">
+        <b style="color:${flex.sflexNeed>0?'var(--reach)':'var(--good)'}">SFLEX</b>
+        ${flex.sflexHave}/${state.targets.SFLEX} filled — needs ${flex.sflexNeed > 0 ? `<b style="color:var(--text)">${flex.sflexNeed}</b> more QB/RB/WR/TE` : 'none'}
+      </div>`;
+    }
+    html += flexInfo;
   }
   c.innerHTML = html;
 }
@@ -1566,6 +2068,62 @@ function logPick(playerId, who){
 let csvRaw = null;
 let csvMapping = null;
 
+function wizardTotalRoster(){
+  const ids = ['wizQB','wizRB','wizWR','wizTE','wizFLEX','wizSFLEX','wizDEF','wizK','wizBENCH'];
+  return ids.reduce((sum, id) => sum + Math.max(0, +el(id).value || 0), 0);
+}
+function updateWizardTotal(){
+  const total = wizardTotalRoster();
+  el('wizTotalRoster').textContent = `${total} per team`;
+  // Auto-suggest # rounds if it matches the previous total or is blank
+  const roundsEl = el('wizRounds');
+  if (!roundsEl.dataset.userEdited){
+    roundsEl.value = total;
+  }
+}
+function openWizard(){
+  el('wizSlot').value = state.slot;
+  el('wizTeams').value = state.teams;
+  el('wizRounds').value = state.rounds;
+  el('wizRounds').dataset.userEdited = ''; // allow auto-sync until user types
+  el('wizQB').value = state.targets.QB ?? 1;
+  el('wizRB').value = state.targets.RB ?? 2;
+  el('wizWR').value = state.targets.WR ?? 3;
+  el('wizTE').value = state.targets.TE ?? 1;
+  el('wizFLEX').value = state.targets.FLEX ?? 1;
+  el('wizSFLEX').value = state.targets.SFLEX ?? 0;
+  el('wizDEF').value = state.targets.DEF ?? 1;
+  el('wizK').value = state.targets.K ?? 1;
+  el('wizBENCH').value = state.targets.BENCH ?? 6;
+  updateWizardTotal();
+  el('wizOverlay').classList.add('on');
+}
+function closeWizard(){ el('wizOverlay').classList.remove('on'); }
+function launchFromWizard(){
+  const teams = Math.max(6, Math.min(20, +el('wizTeams').value || 10));
+  const slot = Math.max(1, Math.min(teams, +el('wizSlot').value || 1));
+  const total = wizardTotalRoster();
+  // Use user's rounds value if set, otherwise the auto-calculated total
+  const rounds = Math.max(10, Math.min(22, +el('wizRounds').value || total));
+  state.teams = teams;
+  state.slot = slot;
+  state.rounds = rounds;
+  state.targets = {
+    QB: Math.max(0, +el('wizQB').value || 0),
+    RB: Math.max(0, +el('wizRB').value || 0),
+    WR: Math.max(0, +el('wizWR').value || 0),
+    TE: Math.max(0, +el('wizTE').value || 0),
+    FLEX: Math.max(0, +el('wizFLEX').value || 0),
+    SFLEX: Math.max(0, +el('wizSFLEX').value || 0),
+    DEF: Math.max(0, +el('wizDEF').value || 0),
+    K: Math.max(0, +el('wizK').value || 0),
+    BENCH: Math.max(0, +el('wizBENCH').value || 0)
+  };
+  state.setupDone = true;
+  closeWizard();
+  render();
+}
+
 function loadCSVText(text){
   const raw = parseCSVRaw(text);
   if (!raw.rows.length){
@@ -1576,6 +2134,115 @@ function loadCSVText(text){
   csvMapping = {...raw.autoMap};
   applyMappingAndLoad();
   renderColumnMapping();
+}
+
+// Position-specific re-ranking — keeps the slot positions in the overall list,
+// just shuffles which player fills which slot. e.g., WR slots 1,3,8 stay WR slots
+// but the order WITHIN those slots changes to match the position-specific CSV.
+function loadPosSpecificText(text, forcedPos){
+  const raw = parseCSVRaw(text);
+  if (!raw.rows.length){ alert('CSV has no data rows.'); return; }
+  const headersLower = raw.headers.map(h => h.toLowerCase());
+  const nameIdx = autoDetectColumn('name', headersLower);
+  const rankIdx = autoDetectColumn('rank', headersLower);
+  const posIdx  = autoDetectColumn('pos', headersLower);
+  if (nameIdx < 0 || rankIdx < 0){
+    alert("Couldn't auto-detect Player/Rank columns. Header needs a 'Player' (or 'Name') and a 'Rank' column.");
+    return;
+  }
+  // Build [{name, rank, pos?}] from CSV
+  const rows = [];
+  for (const cells of raw.rows){
+    const nm = (cells[nameIdx]||'').trim();
+    const rk = parseFloat(cells[rankIdx]);
+    const ps = posIdx >= 0 ? ((cells[posIdx]||'').trim().toUpperCase()) : '';
+    if (!nm || isNaN(rk)) continue;
+    rows.push({ id: nm.toLowerCase().replace(/[^a-z0-9]+/g,'-'), name:nm, rank:rk, pos:ps });
+  }
+  if (!rows.length){ alert('No usable rows.'); return; }
+  // Determine target position
+  let pos = forcedPos;
+  if (!pos || pos === 'AUTO'){
+    // Auto-detect: use the most common pos in CSV, OR derive from matching players in main list
+    const counts = {};
+    for (const r of rows){
+      let p = normalizePos(r.pos);
+      if (!p){
+        const match = state.players.find(x => x.id === r.id);
+        if (match) p = match.pos;
+      }
+      if (p) counts[p] = (counts[p]||0) + 1;
+    }
+    pos = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    if (!pos){ alert("Couldn't auto-detect the position. Pick one from the dropdown."); return; }
+  }
+  // Find the slot positions of this position in the main list
+  const sorted = [...state.players].sort((a,b)=>a.rank-b.rank);
+  const slotIndices = []; // indices in `sorted` where pos === target pos
+  for (let i = 0; i < sorted.length; i++) if (sorted[i].pos === pos) slotIndices.push(i);
+  // Sort the new ranking by rank
+  rows.sort((a,b)=>a.rank-b.rank);
+  // Match new players in order to existing players of that position
+  // Order: rows[0] takes slotIndices[0], rows[1] takes slotIndices[1], etc.
+  // For any new players not in main list, we ignore (would require adding new entries; out of scope here)
+  let assigned = 0;
+  const newOrder = []; // {playerInMainList, mainListRankSlot}
+  for (let i = 0; i < Math.min(rows.length, slotIndices.length); i++){
+    const r = rows[i];
+    const match = state.players.find(x => x.id === r.id) ||
+                  state.players.find(x => x.pos === pos && x.name.toLowerCase().includes(r.name.toLowerCase().split(' ').slice(-1)[0]));
+    if (match) { newOrder.push({ player: match, slotIdx: slotIndices[i] }); assigned++; }
+  }
+  // Assign each matched player the rank value of the slot they're taking
+  for (const { player, slotIdx } of newOrder){
+    player.rank = sorted[slotIdx].rank;
+  }
+  el('posCsvStatus').textContent = `${assigned} ${pos}s re-ranked`;
+  render();
+}
+
+// ESPN second-CSV — only Player + ESPN-rank columns needed.
+function loadEspnText(text){
+  const raw = parseCSVRaw(text);
+  if (!raw.rows.length){ alert('ESPN CSV has no data rows.'); return; }
+  const headersLower = raw.headers.map(h => h.toLowerCase());
+  const nameIdx = autoDetectColumn('name', headersLower);
+  const rankIdx = autoDetectColumn('rank', headersLower);
+  if (nameIdx < 0 || rankIdx < 0){
+    alert("Couldn't auto-detect Player/Rank columns in ESPN CSV. Header needs a 'Player' (or 'Name') and a 'Rank' column.");
+    return;
+  }
+  // Build a name→rank lookup
+  const lookup = {};
+  for (const cells of raw.rows){
+    const nm = (cells[nameIdx]||'').trim();
+    const rk = parseFloat(cells[rankIdx]);
+    if (!nm || isNaN(rk)) continue;
+    const key = nm.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    lookup[key] = rk;
+  }
+  // Merge into existing players
+  let matched = 0;
+  for (const p of state.players){
+    if (lookup[p.id] != null){ p.espnRank = lookup[p.id]; matched++; }
+  }
+  // Loose fallback: match by last-word + first initial
+  if (matched < state.players.length * 0.4){
+    const looseLookup = {};
+    for (const nm in lookup){
+      const parts = nm.split('-');
+      if (parts.length >= 2) looseLookup[parts[0][0]+'-'+parts[parts.length-1]] = lookup[nm];
+    }
+    for (const p of state.players){
+      if (p.espnRank != null) continue;
+      const parts = p.id.split('-');
+      if (parts.length < 2) continue;
+      const key = parts[0][0]+'-'+parts[parts.length-1];
+      if (looseLookup[key] != null){ p.espnRank = looseLookup[key]; matched++; }
+    }
+  }
+  el('espnStatus').textContent = `${matched} of ${state.players.length} players matched`;
+  render();
 }
 
 function applyMappingAndLoad(){
@@ -1647,10 +2314,21 @@ function renderColumnMapping(){
    ============================================================ */
 function wire(){
   el('slot').addEventListener('change', e=>{ state.slot = +e.target.value; render(); });
-  el('teams').addEventListener('change', e=>{ state.teams = Math.max(6, Math.min(16, +e.target.value)); render(); });
-  el('rounds').addEventListener('change', e=>{ state.rounds = Math.max(10, Math.min(20, +e.target.value)); render(); });
+  el('teams').addEventListener('change', e=>{ state.teams = Math.max(6, Math.min(20, +e.target.value)); render(); });
+  el('rounds').addEventListener('change', e=>{ state.rounds = Math.max(10, Math.min(22, +e.target.value)); render(); });
   el('undoBtn').addEventListener('click', ()=>{ state.picks.pop(); render(); });
   el('resetBtn').addEventListener('click', ()=>{ if(confirm('Reset draft picks?')){ state.picks=[]; render(); } });
+
+  // Setup wizard
+  el('setupBtn').addEventListener('click', openWizard);
+  el('wizCancel').addEventListener('click', closeWizard);
+  el('wizLaunch').addEventListener('click', launchFromWizard);
+  // Live recompute total roster as user changes positional inputs
+  ['wizQB','wizRB','wizWR','wizTE','wizFLEX','wizSFLEX','wizDEF','wizK','wizBENCH'].forEach(id=>{
+    el(id).addEventListener('input', updateWizardTotal);
+  });
+  // If user manually edits Rounds, stop auto-syncing from total
+  el('wizRounds').addEventListener('input', e=>{ e.target.dataset.userEdited = '1'; });
 
   document.querySelectorAll('.toolbar .toggle').forEach(btn=>{
     btn.addEventListener('click', e=>{
@@ -1680,6 +2358,28 @@ function wire(){
 
   el('sampleBtn').addEventListener('click', ()=>loadCSVText(SAMPLE_CSV));
   el('reapplyMap').addEventListener('click', ()=>applyMappingAndLoad());
+  el('exportCsv').addEventListener('click', exportRankingsCSV);
+  // ESPN CSV
+  el('espnFile').addEventListener('change', e=>{
+    const f = e.target.files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => loadEspnText(reader.result);
+    reader.readAsText(f);
+  });
+  el('clearEspn').addEventListener('click', ()=>{
+    for (const p of state.players) delete p.espnRank;
+    el('espnStatus').textContent = 'Not loaded';
+    render();
+  });
+  // Position-specific CSV
+  el('posCsvFile').addEventListener('change', e=>{
+    const f = e.target.files[0]; if (!f) return;
+    const forcedPos = el('posCsvPick').value;
+    const reader = new FileReader();
+    reader.onload = () => loadPosSpecificText(reader.result, forcedPos);
+    reader.readAsText(f);
+    e.target.value = ''; // reset so re-upload works
+  });
   el('file').addEventListener('change', e=>{
     const f = e.target.files[0]; if (!f) return;
     const reader = new FileReader();
@@ -1711,12 +2411,13 @@ function wire(){
 
 wire();
 if (!state.players.length){
-  // First run with no data: show banner but don't auto-load — let user choose
   render();
 } else {
   el('dataStatus').textContent = `${state.players.length} players loaded.`;
   render();
 }
+// First-launch: open the setup wizard so the user can configure the league before drafting
+if (!state.setupDone) openWizard();
 </script>
 </body>
 </html>
