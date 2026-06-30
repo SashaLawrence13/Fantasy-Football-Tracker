@@ -1,26 +1,46 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <title>Fantasy Football Draft Tracker + Strategy Advisor</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- pdf.js for PDF rankings parsing (loaded async; falls back gracefully if blocked) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (window['pdfjsLib']) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <style>
-  :root{
+  :root, html[data-theme="dark"]{
     --bg:#0b0f17; --panel:#121826; --panel2:#1a2233; --line:#243049;
     --text:#e6ecf5; --muted:#8a98b3; --accent:#5aa6ff; --good:#37d39b;
     --warn:#f7b955; --bad:#ff5d6c; --value:#bb86fc; --reach:#ff9a3c;
     --qb:#ef6f6c; --rb:#5cd6a8; --wr:#5aa6ff; --te:#f6c66b;
     --def:#9d8cf0; --k:#9aa3b2;
+    --pos-text:#0b0f17;       /* readable text on position-color pills */
+    --row-hover:#172033;
+    --shadow:0 30px 80px rgba(0,0,0,.6);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f6fa; --panel:#ffffff; --panel2:#eef1f7; --line:#d8dde9;
+    --text:#101827; --muted:#5b6678; --accent:#2563eb; --good:#0f9b6e;
+    --warn:#c98515; --bad:#c63247; --value:#7c3aed; --reach:#d96921;
+    --qb:#e84948; --rb:#21b785; --wr:#2563eb; --te:#dba93e;
+    --def:#7e6cd9; --k:#7d8595;
+    --pos-text:#ffffff;       /* white text on saturated pos pills */
+    --row-hover:#e7ecf5;
+    --shadow:0 12px 40px rgba(20,30,55,.12);
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   button,input,select,textarea{font:inherit;color:inherit}
   button{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:6px 10px;border-radius:6px;cursor:pointer}
-  button:hover{background:#222d44;border-color:#34466b}
-  button.primary{background:var(--accent);border-color:var(--accent);color:#03121e;font-weight:600}
-  button.primary:hover{background:#7ab7ff}
-  button.danger{background:transparent;border-color:#553039;color:var(--bad)}
-  button.danger:hover{background:#2a181d}
+  button:hover{background:var(--row-hover);border-color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:var(--pos-text);font-weight:600}
+  button.primary:hover{background:color-mix(in srgb, var(--accent) 80%, white)}
+  button.danger{background:transparent;border-color:color-mix(in srgb, var(--bad) 50%, var(--line));color:var(--bad)}
+  button.danger:hover{background:color-mix(in srgb, var(--bad) 14%, var(--panel))}
   button.ghost{background:transparent}
   input[type="text"],input[type="number"],select{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
   input[type="number"]{width:54px}
@@ -32,8 +52,8 @@
   th.sortable.active{color:var(--accent)}
   th .arrow{display:inline-block;margin-left:3px;opacity:.5;font-size:9px}
   th.sortable.active .arrow{opacity:1}
-  tr:hover td{background:#172033}
-  .pos{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;color:#0b0f17}
+  tr:hover td{background:var(--row-hover)}
+  .pos{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;color:var(--pos-text)}
   .pos.QB{background:var(--qb)} .pos.RB{background:var(--rb)} .pos.WR{background:var(--wr)}
   .pos.TE{background:var(--te)} .pos.DEF{background:var(--def);color:#fff} .pos.K{background:var(--k)}
 
@@ -63,11 +83,11 @@
   .col{display:flex;flex-direction:column;gap:8px}
   .muted{color:var(--muted)}
   .pill{display:inline-block;padding:2px 7px;border-radius:999px;border:1px solid var(--line);font-size:11px;color:var(--muted)}
-  .pill.good{color:var(--good);border-color:#1e4937}
-  .pill.bad{color:var(--bad);border-color:#4a1f25}
-  .pill.warn{color:var(--warn);border-color:#4a3a1a}
-  .pill.value{color:var(--value);border-color:#3a2a55}
-  header{position:sticky;top:0;z-index:10;background:#0b0f17e0;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
+  .pill.good{color:var(--good);border-color:color-mix(in srgb, var(--good) 40%, var(--line))}
+  .pill.bad{color:var(--bad);border-color:color-mix(in srgb, var(--bad) 40%, var(--line))}
+  .pill.warn{color:var(--warn);border-color:color-mix(in srgb, var(--warn) 40%, var(--line))}
+  .pill.value{color:var(--value);border-color:color-mix(in srgb, var(--value) 40%, var(--line))}
+  header{position:sticky;top:0;z-index:10;background:var(--bg);opacity:.98;backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
   header .row{justify-content:space-between}
   h1{margin:0;font-size:15px;letter-spacing:.02em}
   h1 .sub{color:var(--muted);font-weight:400;margin-left:8px;font-size:12px}
@@ -77,13 +97,13 @@
   .pickbar{
     display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;
     padding:14px 20px;border-radius:12px;margin-top:14px;
-    background:linear-gradient(180deg,#1a2233,#121826);
+    background:var(--panel2);
     border:1px solid var(--line);position:relative;overflow:hidden;
   }
   .pickbar.mine{
-    background:linear-gradient(180deg,#1a3a5a,#0e2240);
+    background:color-mix(in srgb, var(--accent) 20%, var(--panel));
     border-color:var(--accent);
-    box-shadow:0 0 0 1px var(--accent), 0 0 30px rgba(90,166,255,.25);
+    box-shadow:0 0 0 1px var(--accent), 0 0 30px color-mix(in srgb, var(--accent) 35%, transparent);
     animation:pulse 1.6s ease-in-out infinite;
   }
   @keyframes pulse {
@@ -108,9 +128,9 @@
   .pickbar .next-strip{display:flex;gap:5px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap}
   .pickbar .next-tag{
     font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);
-    background:#0e1421;color:var(--muted);font-variant-numeric:tabular-nums;
+    background:var(--bg);color:var(--muted);font-variant-numeric:tabular-nums;
   }
-  .pickbar .next-tag.me{background:var(--accent);color:#03121e;border-color:var(--accent);font-weight:700}
+  .pickbar .next-tag.me{background:var(--accent);color:var(--pos-text);border-color:var(--accent);font-weight:700}
   .pickbar.mine .countdown{color:var(--accent)}
   .pickbar .progress-bar{
     position:absolute;left:0;bottom:0;height:3px;background:var(--accent);
@@ -118,11 +138,11 @@
   }
 
   /* Banner */
-  .banner{padding:14px 18px;border-radius:10px;margin:14px 0;border:1px solid var(--line);background:linear-gradient(180deg,#1a2233,#121826)}
-  .banner.reach{border-color:#7a4521;background:linear-gradient(180deg,#3a2517,#231711)}
-  .banner.hold{border-color:#1e4937;background:linear-gradient(180deg,#142a20,#121e18)}
-  .banner.value{border-color:#3a2a55;background:linear-gradient(180deg,#22183a,#181227)}
-  .banner.pivot{border-color:#4a3a1a;background:linear-gradient(180deg,#2d2412,#1f1b10)}
+  .banner{padding:14px 18px;border-radius:10px;margin:14px 0;border:1px solid var(--line);background:var(--panel2)}
+  .banner.reach{border-color:var(--reach);background:color-mix(in srgb, var(--reach) 14%, var(--panel))}
+  .banner.hold{border-color:var(--good);background:color-mix(in srgb, var(--good) 12%, var(--panel))}
+  .banner.value{border-color:var(--value);background:color-mix(in srgb, var(--value) 14%, var(--panel))}
+  .banner.pivot{border-color:var(--warn);background:color-mix(in srgb, var(--warn) 14%, var(--panel))}
   .banner .label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
   .banner .headline{font-size:22px;font-weight:700;margin:4px 0 6px}
   .banner.reach .headline{color:var(--reach)}
@@ -140,6 +160,10 @@
   /* Roster */
   .roster-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line)}
   .roster-row:last-child{border-bottom:0}
+  .bye-tag{font-size:9px;background:var(--panel2);color:var(--muted);padding:0 4px;border-radius:3px;margin-left:4px;font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .bye-warn{background:color-mix(in srgb, var(--reach) 18%, var(--panel));border:1px solid var(--reach);border-radius:6px;padding:6px 8px;margin-bottom:6px;font-size:11.5px;color:var(--text)}
+  .queue-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:color-mix(in srgb, var(--accent) 25%, var(--panel));color:var(--accent);letter-spacing:-.02em}
+  .note-badge{cursor:default;font-size:11px;opacity:.7}
   .target-row{display:grid;grid-template-columns:50px 1fr 70px;gap:6px;align-items:center;margin:4px 0}
   .target-row .progress{height:6px;background:var(--panel2);border-radius:3px;overflow:hidden}
   .target-row .progress .fill{height:100%;background:var(--good);transition:width .2s}
@@ -151,33 +175,65 @@
   .urg-row .urg-bar{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;position:relative}
   .urg-row .urg-fill{height:100%;background:linear-gradient(90deg,var(--good),var(--warn),var(--bad));transition:width .25s}
   .urg-row .urg-stats{color:var(--muted);font-size:10.5px;white-space:nowrap}
-  .urg-row.top{background:#1a2233;border-radius:4px;padding:3px 4px;margin:0 -4px}
+  .urg-row.top{background:var(--panel2);border-radius:4px;padding:3px 4px;margin:0 -4px}
   .urg-row .alert{color:var(--reach);font-weight:600}
 
   /* Available list */
   .toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
   .toolbar button.toggle{padding:4px 10px;font-size:12px;border-radius:999px}
-  .toolbar button.toggle.on{background:var(--accent);border-color:var(--accent);color:#03121e}
+  .toolbar button.toggle.on{background:var(--accent);border-color:var(--accent);color:var(--pos-text)}
   .available-wrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:8px}
   .available-wrap table{border-collapse:separate;border-spacing:0}
   td.delta-pos{color:var(--value)} /* falling (ADP later than rank... wait, value means rank lower than ADP) */
   td.delta-neg{color:var(--reach)}
   tr.dont-want td{opacity:.4;text-decoration:line-through}
   tr.taken td{opacity:.35}
-  tr.targeted td{background:#1b2c1f}
-  tr.targeted:hover td{background:#22372a}
+  tr.targeted td{background:color-mix(in srgb, var(--good) 16%, var(--panel))}
+  tr.targeted:hover td{background:color-mix(in srgb, var(--good) 25%, var(--panel))}
 
-  /* Tier bands — left edge color by position-relative tier */
-  tr.tier-band-1 td:first-child{box-shadow:inset 3px 0 0 #5cd6a8}
-  tr.tier-band-2 td:first-child{box-shadow:inset 3px 0 0 #5aa6ff}
-  tr.tier-band-3 td:first-child{box-shadow:inset 3px 0 0 #f6c66b}
-  tr.tier-band-4 td:first-child{box-shadow:inset 3px 0 0 #bb86fc}
-  tr.tier-band-5 td:first-child{box-shadow:inset 3px 0 0 #9aa3b2}
+  /* CROSS-POSITION tier bands — strong row backgrounds, distinct color per tier */
+  tr.tier-band-1 td{background:rgba(246,198,107,.14)}  /* Gold — elite */
+  tr.tier-band-2 td{background:rgba(92,214,168,.11)}   /* Green — high value */
+  tr.tier-band-3 td{background:rgba(90,166,255,.10)}   /* Blue — round 3 */
+  tr.tier-band-4 td{background:rgba(187,134,252,.09)}  /* Purple — starters */
+  tr.tier-band-5 td{background:rgba(247,185,85,.08)}   /* Amber — depth */
+  tr.tier-band-6 td{background:rgba(255,154,60,.08)}   /* Orange — bench */
+  tr.tier-band-7 td{background:rgba(255,93,108,.08)}   /* Red — late */
+  tr.tier-band-8 td{background:rgba(154,163,178,.08)}  /* Grey — deep */
+  tr.tier-band-1 td:first-child{box-shadow:inset 4px 0 0 #f6c66b}
+  tr.tier-band-2 td:first-child{box-shadow:inset 4px 0 0 #5cd6a8}
+  tr.tier-band-3 td:first-child{box-shadow:inset 4px 0 0 #5aa6ff}
+  tr.tier-band-4 td:first-child{box-shadow:inset 4px 0 0 #bb86fc}
+  tr.tier-band-5 td:first-child{box-shadow:inset 4px 0 0 #f7b955}
+  tr.tier-band-6 td:first-child{box-shadow:inset 4px 0 0 #ff9a3c}
+  tr.tier-band-7 td:first-child{box-shadow:inset 4px 0 0 #ff5d6c}
+  tr.tier-band-8 td:first-child{box-shadow:inset 4px 0 0 #9aa3b2}
+  /* THICK divider at the top of each new tier — natural stopping point in a live draft */
+  tr.tier-start td{border-top:3px solid var(--line)}
+  tr.tier-start-1 td{border-top:3px solid #f6c66b}
+  tr.tier-start-2 td{border-top:3px solid #5cd6a8}
+  tr.tier-start-3 td{border-top:3px solid #5aa6ff}
+  tr.tier-start-4 td{border-top:3px solid #bb86fc}
+  tr.tier-start-5 td{border-top:3px solid #f7b955}
+  tr.tier-start-6 td{border-top:3px solid #ff9a3c}
+  tr.tier-start-7 td{border-top:3px solid #ff5d6c}
+  tr.tier-start-8 td{border-top:3px solid #9aa3b2}
+  /* Targeted/dont-want overrides keep their styling on top of tier */
+  tr.dont-want td{background:transparent !important}
+  tr.targeted td{background:rgba(92,214,168,.18) !important}
   .tier-num{display:inline-block;font-size:9px;background:var(--panel2);color:var(--muted);padding:1px 4px;border-radius:3px;margin-right:4px;font-weight:700;letter-spacing:.04em;font-variant-numeric:tabular-nums;cursor:pointer}
+  .tier-num.t1{background:#f6c66b;color:#0b0f17}
+  .tier-num.t2{background:#5cd6a8;color:#0b0f17}
+  .tier-num.t3{background:#5aa6ff;color:#0b0f17}
+  .tier-num.t4{background:#bb86fc;color:#0b0f17}
+  .tier-num.t5{background:#f7b955;color:#0b0f17}
+  .tier-num.t6{background:#ff9a3c;color:#0b0f17}
+  .tier-num.t7{background:#ff5d6c;color:#fff}
+  .tier-num.t8{background:#9aa3b2;color:#0b0f17}
   .tier-num:hover{background:#2a3551;color:var(--text)}
   .rank-cell{display:flex;align-items:center;gap:4px}
   .rank-btn{padding:0;background:transparent;border:1px solid var(--line);color:var(--muted);width:14px;height:14px;font-size:8px;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:3px;cursor:pointer}
-  .rank-btn:hover{background:var(--accent);color:#03121e;border-color:var(--accent)}
+  .rank-btn:hover{background:var(--accent);color:var(--pos-text);border-color:var(--accent)}
   .row-actions{display:flex;gap:4px;justify-content:flex-end}
   .row-actions button{padding:3px 7px;font-size:11px}
 
@@ -190,7 +246,7 @@
   /* Recommendations */
   .recs{display:grid;grid-template-columns:1fr;gap:8px}
   .rec-card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 11px;position:relative}
-  .rec-card .rank-badge{position:absolute;top:-7px;left:10px;background:var(--accent);color:#03121e;font-weight:800;font-size:11px;padding:2px 8px;border-radius:999px;letter-spacing:.04em}
+  .rec-card .rank-badge{position:absolute;top:-7px;left:10px;background:var(--accent);color:var(--pos-text);font-weight:800;font-size:11px;padding:2px 8px;border-radius:999px;letter-spacing:.04em}
   .rec-card.silver .rank-badge{background:#b8b8c8}
   .rec-card.bronze .rank-badge{background:#c89060}
   .rec-card .label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -200,7 +256,7 @@
   .rec-card .score-row .pill{font-size:10px}
   .rec-card .why{font-size:11px;color:var(--text);margin-top:6px;line-height:1.4;font-style:italic;opacity:.85}
   .rec-card button{margin-top:8px;width:100%}
-  .rec-card.gold{border-color:#5a4717;background:linear-gradient(180deg,#231d12,#1a1a26)}
+  .rec-card.gold{border-color:var(--warn);background:color-mix(in srgb, var(--warn) 15%, var(--panel))}
 
   /* Pros / Cons */
   .pc-section{margin-top:8px}
@@ -216,7 +272,7 @@
   /* Best at each position */
   .bbp-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:8px 0 6px;border-top:1px solid var(--line);padding-top:8px}
   .bbp-row{display:grid;grid-template-columns:34px 1fr auto auto;gap:6px;align-items:center;padding:4px 0;font-size:11.5px}
-  .bbp-row.need{background:#172033;border-radius:5px;padding:4px 6px;margin:0 -6px}
+  .bbp-row.need{background:color-mix(in srgb, var(--accent) 14%, var(--panel));border-radius:5px;padding:4px 6px;margin:0 -6px}
   .bbp-row .bbp-name{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bbp-row .bbp-name .pname{overflow:hidden;text-overflow:ellipsis}
   .bbp-row .bbp-rank{color:var(--muted);font-size:10.5px;font-variant-numeric:tabular-nums}
@@ -238,11 +294,17 @@
   .team-card .empty-slot{color:var(--muted);font-size:11px;font-style:italic;padding:3px 0}
   .grade-pill{display:inline-block;font-size:10px;font-weight:800;padding:1px 6px;border-radius:4px;background:var(--panel);border:1px solid var(--line);letter-spacing:.02em;font-variant-numeric:tabular-nums}
 
+  /* Spread/disagreement indicator next to Comp rank */
+  .spread-pill{display:inline-block;margin-left:5px;font-size:9.5px;padding:0 4px;border-radius:3px;font-variant-numeric:tabular-nums;font-weight:600}
+  .spread-pill.tight{background:color-mix(in srgb, var(--good) 22%, var(--panel));color:var(--good)}
+  .spread-pill.med{background:color-mix(in srgb, var(--warn) 22%, var(--panel));color:var(--warn)}
+  .spread-pill.wide{background:color-mix(in srgb, var(--bad) 22%, var(--panel));color:var(--bad)}
+
   /* End-of-draft summary */
   .eod-leaderboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px}
   .eod-team{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
   .eod-team.me{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-  .eod-team.rank-1{background:linear-gradient(180deg,#2a2310,#1a1a26);border-color:#7a6633}
+  .eod-team.rank-1{background:color-mix(in srgb, var(--warn) 18%, var(--panel));border-color:var(--warn)}
   .eod-rank{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
   .eod-name{font-size:15px;font-weight:700}
   .eod-grade{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.02em}
@@ -257,16 +319,22 @@
   .board{display:grid;gap:3px;margin-top:14px;font-size:11px}
   .board .cell{background:var(--panel2);border:1px solid var(--line);padding:5px 6px;border-radius:5px;min-height:38px}
   .board .cell.me{outline:2px solid var(--accent);outline-offset:-2px}
-  .board .cell.now{background:#2a1f10;border-color:var(--reach)}
+  .board .cell.now{background:color-mix(in srgb, var(--reach) 22%, var(--panel));border-color:var(--reach)}
   .board .cell .small{font-size:10px;color:var(--muted)}
   .board .head{background:transparent;border:0;color:var(--muted);text-align:center}
   .board-pick-row{display:flex;align-items:center;gap:3px;line-height:1.15}
   .board-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-  .board-grade{font-size:10px;font-weight:800;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.35);font-variant-numeric:tabular-nums;letter-spacing:-.02em;flex-shrink:0}
+  .board-grade{font-size:10px;font-weight:800;padding:0 3px;border-radius:3px;background:color-mix(in srgb, var(--line) 60%, transparent);font-variant-numeric:tabular-nums;letter-spacing:-.02em;flex-shrink:0}
 
   /* Modal-ish drop zone */
   .drop{border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--muted);margin-bottom:8px}
   .drop.over{border-color:var(--accent);color:var(--accent)}
+
+  /* Composite weight sliders */
+  .ws-row{display:grid;grid-template-columns:60px 1fr 38px;gap:8px;align-items:center;font-size:11.5px;margin:3px 0}
+  .ws-row label{color:var(--muted);font-size:11px}
+  .ws-row input[type=range]{width:100%;accent-color:var(--accent)}
+  .ws-row .ws-val{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;color:var(--text)}
 
   /* Column mapping */
   .map-row{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center;font-size:11.5px}
@@ -281,12 +349,64 @@
   .dontwant-list .pill{cursor:pointer}
   .dontwant-list .pill:hover{color:var(--bad);border-color:var(--bad)}
 
+  /* Queue */
+  .queue-row{display:grid;grid-template-columns:18px 1fr auto auto;gap:6px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line);font-size:12px}
+  .queue-row:last-child{border-bottom:0}
+  .queue-row .q-num{color:var(--muted);font-size:10px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
+  .queue-row .q-name{display:flex;align-items:center;gap:5px;overflow:hidden}
+  .queue-row .q-name .pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .queue-row button.qb-btn{padding:2px 6px;font-size:10px}
+  .queue-empty{color:var(--muted);font-size:12px;font-style:italic;padding:4px 0}
+
+  /* Pick history rows */
+  .hist-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px solid var(--line);font-size:12px}
+  .hist-row.me{background:color-mix(in srgb, var(--accent) 10%, var(--panel))}
+  .hist-pick{font-variant-numeric:tabular-nums;color:var(--text);font-weight:600;min-width:54px}
+  .hist-team{color:var(--muted);font-size:11px;min-width:24px}
+
   .scarce-flag{color:var(--reach);font-weight:600}
   .tier-break{border-top:2px solid #3a2517 !important}
-  .next-up{background:#172033}
+  .next-up{background:var(--row-hover)}
 
   /* Empty state */
   .empty{padding:30px;text-align:center;color:var(--muted)}
+
+  /* Hover glossary */
+  .glossary-wrap{position:relative;display:inline-block}
+  .glossary-panel{
+    display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:50;
+    width:520px;max-height:75vh;overflow-y:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;font-size:11.5px;line-height:1.45;color:var(--text);
+    box-shadow:var(--shadow);
+  }
+  .glossary-wrap:hover .glossary-panel,
+  .glossary-wrap:focus-within .glossary-panel,
+  .glossary-panel.pinned{display:block}
+  .glossary-panel h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--line)}
+  .glossary-panel h3:first-of-type{border-top:0;padding-top:0;margin-top:0}
+  .glossary-panel dl{margin:0;display:grid;grid-template-columns:90px 1fr;gap:4px 10px}
+  .glossary-panel dt{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+  .glossary-panel dd{margin:0;color:var(--text)}
+  .glossary-panel .gl-pin{position:absolute;top:8px;right:10px;font-size:10px;cursor:pointer;color:var(--muted);background:transparent;border:1px solid var(--line);padding:2px 6px;border-radius:4px}
+  .glossary-panel .gl-pin:hover{color:var(--text)}
+
+  /* Print cheat sheet — clean tier-grouped view */
+  .printSheet{display:none;background:white;color:black;padding:20px;font:11px/1.3 -apple-system,Helvetica,Arial,sans-serif}
+  .printSheet h1{font-size:18px;margin:0 0 4px;color:#000}
+  .printSheet .sub{font-size:10px;color:#555;margin-bottom:10px}
+  .printSheet .tier-block{break-inside:avoid;margin-bottom:10px}
+  .printSheet .tier-head{display:flex;align-items:center;gap:6px;padding:3px 6px;font-size:11px;font-weight:700;color:#fff;border-radius:3px;margin-bottom:3px}
+  .printSheet .ps-row{display:grid;grid-template-columns:24px 18px 1fr 32px 26px;gap:6px;padding:2px 4px;font-size:10.5px;border-bottom:1px dotted #ccc}
+  .printSheet .ps-row .pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .printSheet .ps-rank{font-weight:700;text-align:right;color:#333}
+  .printSheet .ps-pos{font-weight:700;color:#fff;padding:0 3px;border-radius:2px;font-size:9px;text-align:center}
+  .printSheet .ps-meta{font-size:9px;color:#666;text-align:right}
+  @media print {
+    body > *:not(.printSheet){display:none !important}
+    .printSheet{display:block !important}
+    @page{margin:.5in}
+  }
 
   /* Setup wizard overlay */
   .wiz-overlay{
@@ -313,6 +433,15 @@
   .wiz-roster input{width:100%;text-align:center}
   .wiz-actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px}
   .wiz-actions .primary{padding:10px 18px;font-size:14px}
+
+  /* Compare view */
+  .cmp-grid{display:grid;grid-template-columns:160px 1fr 1fr;gap:0;align-items:start}
+  .cmp-header{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;padding:10px;background:var(--panel2);border-bottom:2px solid var(--line)}
+  .cmp-row{padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;font-variant-numeric:tabular-nums}
+  .cmp-row.label{background:var(--panel2);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.06em}
+  .cmp-row.winner{background:color-mix(in srgb, var(--good) 14%, var(--panel));color:var(--good);font-weight:700}
+  .cmp-row.proscons{font-size:11px;line-height:1.4}
+  .cmp-row.proscons .pc-item{padding:1px 0;display:flex;gap:5px}
 </style>
 </head>
 <body>
@@ -327,12 +456,34 @@
       <input type="number" id="teams" min="6" max="16" value="10" />
       <label class="muted">Rounds</label>
       <input type="number" id="rounds" min="10" max="20" value="16" />
-      <button id="undoBtn" title="Undo last pick">Undo</button>
+      <button id="undoBtn" title="Undo last pick (U)">Undo</button>
+      <button id="printBtn" title="Print cheat sheet">🖨</button>
+      <span class="glossary-wrap"><button id="glossaryBtn" title="Hover for glossary of every term">❓ Glossary</button><div class="glossary-panel" id="glossaryPanel"></div></span>
+      <button id="helpBtn" title="Keyboard shortcuts (?)">?</button>
+      <button id="themeBtn" title="Toggle light / dark mode">🌙</button>
       <button id="setupBtn" title="League setup">⚙ Setup</button>
       <button id="resetBtn" class="danger">Reset draft</button>
     </div>
   </div>
 </header>
+
+<!-- PRINT-READY CHEAT SHEET (hidden on screen, shown only when printing) -->
+<div id="printSheet" class="printSheet">
+  <h1>Fantasy Football Cheat Sheet</h1>
+  <div class="sub" id="printSubtitle"></div>
+  <div id="printBody"></div>
+</div>
+
+<!-- COMPARE PLAYERS MODAL -->
+<div id="compareOverlay" class="wiz-overlay">
+  <div class="wiz" id="compareModal" style="max-width:820px">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 style="margin:0">⚖ Player Comparison</h2>
+      <button id="compareClose" class="ghost">✕ Close</button>
+    </div>
+    <div id="compareBody" style="margin-top:14px"></div>
+  </div>
+</div>
 
 <!-- LEAGUE SETUP WIZARD -->
 <div id="wizOverlay" class="wiz-overlay">
@@ -346,6 +497,16 @@
         <div class="field"><label>My slot</label><input type="number" id="wizSlot" min="1" max="20" /></div>
         <div class="field"><label># of teams</label><input type="number" id="wizTeams" min="6" max="20" /></div>
         <div class="field"><label># of rounds</label><input type="number" id="wizRounds" min="10" max="22" /></div>
+      </div>
+      <div style="margin-top:10px">
+        <label style="font-size:11px;color:var(--muted)">Scoring format</label>
+        <select id="wizScoringFormat" style="width:100%;margin-top:3px">
+          <option value="ppr">1 PPR (1 pt per reception)</option>
+          <option value="half">0.5 PPR (half PPR)</option>
+          <option value="std">Standard (no PPR)</option>
+          <option value="pp6">1 PPR + 6pt passing TD</option>
+        </select>
+        <div class="muted" style="font-size:10.5px;margin-top:4px">Recomputes 2025 fantasy production for your league's scoring.</div>
       </div>
     </fieldset>
 
@@ -402,6 +563,13 @@
     <div class="progress-bar" id="pbProgress" style="width:0%"></div>
   </div>
 
+  <!-- POSITION RUN ALERT (shows when 3+ of last 5 picks share a pos) -->
+  <div id="runAlert" class="banner reach" style="display:none;margin-top:0">
+    <div class="label">Position run detected</div>
+    <div class="headline" id="runAlertHeadline"></div>
+    <div class="why" id="runAlertWhy"></div>
+  </div>
+
   <!-- STRATEGY BANNER -->
   <div id="banner" class="banner hold">
     <div class="label">Strategy</div>
@@ -431,6 +599,18 @@
       </div>
 
       <div class="panel">
+        <h2>My Queue <span class="count" id="queueCount">0</span></h2>
+        <div id="queueList"></div>
+        <button id="draftQueueTop" class="primary" style="width:100%;margin-top:6px;display:none">⬆ Draft top of queue</button>
+        <div class="muted" style="font-size:11px;margin-top:6px">Click ➕ next to any player to add. Drafted/Don't-Want players auto-clear.</div>
+      </div>
+
+      <div class="panel" id="stackHandcuffPanel" style="display:none">
+        <h2>Stack & Handcuff Suggestions</h2>
+        <div id="stackHandcuffList"></div>
+      </div>
+
+      <div class="panel">
         <h2>Don't-Want List <span class="count" id="dontWantCount">0</span></h2>
         <div id="dontWantList" class="dontwant-list"><span class="muted">Click 🚫 next to a player to add.</span></div>
       </div>
@@ -438,16 +618,27 @@
       <div class="panel">
         <h2>Rankings Data</h2>
         <div id="drop" class="drop">
-          <div>Drop CSV here or</div>
+          <div>Drop CSV <b>or PDF</b> here</div>
           <div style="margin-top:6px">
-            <input type="file" id="file" accept=".csv,text/csv" style="display:none" />
-            <button onclick="document.getElementById('file').click()">Upload CSV</button>
+            <input type="file" id="file" accept=".csv,.pdf,text/csv,application/pdf" style="display:none" />
+            <button onclick="document.getElementById('file').click()">Upload CSV / PDF</button>
             <button id="sampleBtn" class="ghost">Load sample</button>
           </div>
-          <div class="muted" style="font-size:11px;margin-top:8px">Columns: Player, Position, Your_Rank, ADP <span style="opacity:.7">(optional: Photo)</span></div>
-          <div style="margin-top:6px">
+          <div class="muted" style="font-size:11px;margin-top:8px">CSV cols: Player, Position, Your_Rank, ADP <span style="opacity:.7">(optional: Tier, Photo)</span><br/>PDFs are text-extracted — works best when the file has selectable text (not scanned images).</div>
+          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
             <button id="exportCsv" class="ghost" style="font-size:11px" title="Download your current rankings (with overrides and tiers) as a CSV">⬇ Export my rankings</button>
+            <button id="useCompositeBtn" class="primary" style="font-size:11px" title="Replace active rank with a synthesized blend of your CSV, ADP, ESPN, and 2025 finish">🧠 Use Composite</button>
+            <button id="revertCompositeBtn" class="ghost" style="font-size:11px;display:none" title="Revert to your original CSV ranks">↺ Revert</button>
           </div>
+          <div id="compositeNote" class="muted" style="font-size:10.5px;margin-top:6px">Composite blends Your_Rank · ADP · ESPN · 2025 finish with rebalancing weights when sources are missing.</div>
+          <details style="margin-top:8px">
+            <summary style="cursor:pointer;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">⚖ Tune composite weights</summary>
+            <div id="weightSliders" style="margin-top:8px"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+              <span class="muted" style="font-size:10.5px">Auto-normalizes to 100%</span>
+              <button id="resetWeights" class="ghost" style="font-size:10.5px;padding:3px 8px">Reset defaults</button>
+            </div>
+          </details>
         </div>
         <div class="muted" id="dataStatus">No data loaded.</div>
 
@@ -518,9 +709,13 @@
                 <th class="sortable" data-sort="rank">Rk<span class="arrow"></span></th>
                 <th class="sortable" data-sort="name">Player<span class="arrow"></span></th>
                 <th class="sortable" data-sort="pos">Pos<span class="arrow"></span></th>
+                <th class="sortable" data-sort="comp" title="Composite rank — blend of your CSV, ADP, ESPN, and 2025 finish">Comp<span class="arrow"></span></th>
                 <th class="sortable" data-sort="adp">ADP<span class="arrow"></span></th>
                 <th class="sortable" data-sort="espn" title="ESPN draft rank (upload separate CSV)">ESPN<span class="arrow"></span></th>
                 <th class="sortable" data-sort="espnDelta" title="Your rank − ESPN rank. Positive = wait, ESPN drafts later">ΔE<span class="arrow"></span></th>
+                <th class="sortable" data-sort="bye" title="2026 NFL bye week">Bye<span class="arrow"></span></th>
+                <th class="sortable" data-sort="last" title="2025 season finish (actual fantasy points)">'25<span class="arrow"></span></th>
+                <th class="sortable" data-sort="lastDelta" title="2025 finish − current rank. Positive = market is sleeping on a proven producer">ΔY<span class="arrow"></span></th>
                 <th class="sortable" data-sort="delta">Δ<span class="arrow"></span></th>
                 <th>Flag</th>
                 <th></th>
@@ -546,6 +741,11 @@
         <h2>Draft Board</h2>
         <div id="board" class="board"></div>
       </div>
+
+      <div class="panel">
+        <h2>Pick History <span class="count" id="pickHistCount">0</span></h2>
+        <div id="pickHistory" style="max-height:300px;overflow:auto"></div>
+      </div>
     </div>
 
     <!-- RIGHT COLUMN -->
@@ -558,7 +758,8 @@
           <summary>How is this scored?</summary>
           <div class="muted" style="font-size:11px;line-height:1.5">
             Composite of <b>Need</b> (target gap), <b>Value</b> (your-pick vs ADP),
-            <b>Rank</b> (your CSV rank), and <b>Scarcity</b> (tier drop before your next pick).
+            <b>Rank</b> (your CSV rank), <b>Scarcity</b> (tier drop before your next pick), and
+            <b>Production</b> (2025 actual finish + sleeper bonus when the market drops a proven producer).
             Balanced engine — no single factor dominates.
           </div>
         </details>
@@ -584,7 +785,7 @@
   </div>
 
   <!-- END-OF-DRAFT SUMMARY (shown only when draft fills up) -->
-  <div id="endOfDraft" class="panel" style="margin-top:14px;display:none;border-color:#5a4717;background:linear-gradient(180deg,#231d12,#1a1a26)">
+  <div id="endOfDraft" class="panel" style="margin-top:14px;display:none;border-color:var(--warn);background:color-mix(in srgb, var(--warn) 12%, var(--panel))">
     <h2 style="color:var(--warn)">🏆 Draft Complete — Final Grades</h2>
     <div id="endOfDraftBody"></div>
   </div>
@@ -710,6 +911,219 @@ Chris Boswell,K,104,155.6
 Cameron Dicker,K,105,158.2`;
 
 /* ============================================================
+   2025 SEASON BASELINE — compiled from full nflverse PBP data
+   Each entry: [name, position, team, fantasy_points (1 PPR), finish_rank]
+   329 players ranked by actual 2025 fantasy production.
+   ============================================================ */
+const BASELINE_2025 = [["J.Williams","RB","DAL",0,0,0,1224,11,1,100,1246,9],["C.McCaffrey","RB","SF",0,0,0,1285,10,0,113,1009,9],["P.Nacua","WR","LA",0,0,0,129,2,0,153,2047,12],["B.Robinson","RB","SF",0,0,0,1884,9,2,88,848,4],["D.Maye","QB","NE",5222,37,12,666,5,8,1,2,0],["J.Allen","QB","BUF",4224,29,12,700,16,7,0,0,0],["J.Smith-Njigba","WR","SEA",0,0,0,36,0,0,136,1992,12],["M.Stafford","QB","LA",5643,52,9,40,0,5,0,0,0],["K.Williams","RB","NE",0,0,0,1448,12,2,57,579,8],["J.Gibbs","RB","DET",0,0,0,1223,13,1,77,613,5],["J.Taylor","RB","IND",0,0,0,1587,18,1,46,378,2],["T.Lawrence","QB","JAX",4214,32,14,400,9,4,0,0,0],["C.Williams","QB","CHI",4560,31,12,455,3,2,2,22,1],["A.St. Brown","WR","DET",0,0,0,9,0,0,117,1401,11],["J.Cook","RB","BUF",0,0,0,1784,12,4,37,320,2],["D.Achane","RB","MIA",0,0,0,1350,8,0,67,481,4],["B.Nix","QB","DEN",4210,28,12,406,5,3,0,0,0],["T.McBride","WR","ARI",0,0,0,0,0,0,126,1239,11],["J.Chase","WR","CIN",0,0,0,14,0,0,125,1412,8],["J.Hurts","QB","PHI",3392,26,6,450,8,6,0,0,0],["D.Prescott","QB","DAL",4552,30,10,189,2,5,0,0,0],["J.Goff","QB","DET",4564,34,8,53,0,5,0,0,0],["J.Herbert","QB","LAC",3886,26,13,569,2,5,0,0,0],["T.Etienne","RB","JAX",0,0,0,1272,7,0,44,354,7],["G.Pickens","WR","DAL",0,0,0,0,0,0,93,1429,9],["P.Mahomes","QB","KC",3587,22,11,429,5,0,1,-10,0],["D.Henry","RB","BAL",0,0,0,1595,16,3,15,150,0],["C.Brown","RB","CIN",0,0,0,1019,6,0,69,414,5],["S.Darnold","QB","SEA",4720,30,14,122,0,9,0,0,0],["C.Olave","WR","NO",0,0,1,-3,0,0,100,1163,9],["B.Mayfield","QB","TB",3693,26,11,391,1,4,0,0,0],["K.Walker","RB","SEA",0,0,0,1340,9,0,40,386,0],["J.Love","QB","GB",3704,27,6,222,0,2,0,0,0],["D.Adams","WR","LA",0,0,0,0,0,0,71,974,15],["T.Johnson","WR","NYG",0,0,0,22,0,0,85,1047,11],["D.Swift","RB","CHI",0,0,0,1217,10,2,36,328,1],["Z.Flowers","WR","BAL",0,0,0,62,1,0,86,1211,5],["S.Barkley","RB","PHI",0,0,0,1248,7,0,40,298,2],["A.Jeanty","RB","LV",0,0,0,975,5,1,55,346,5],["J.Jacobs","RB","GB",0,0,0,984,13,2,37,285,1],["S.Diggs","WR","NE",0,0,0,0,0,0,99,1123,5],["C.Sutton","WR","DEN",0,0,0,0,0,0,81,1087,8],["J.Dart","QB","NYG",2272,15,5,492,9,4,0,0,0],["B.Young","QB","CAR",3275,24,12,259,3,6,0,0,0],["K.Gainwell","RB","PIT",0,0,0,557,5,0,77,512,3],["N.Collins","WR","HOU",0,0,0,15,1,0,74,1138,6],["R.Stevenson","RB","NE",0,0,0,822,7,2,44,471,3],["R.Harvey","RB","DEN",0,0,0,597,7,1,56,424,5],["T.McMillan","WR","CAR",0,0,0,0,0,0,75,1094,7],["A.Brown","WR","PHI",0,0,0,0,0,0,81,1028,7],["J.Brissett","QB","ARI",3366,23,8,169,1,5,0,0,0],["D.Jones","QB","IND",3101,19,8,171,5,4,0,0,0],["J.Warren","RB","PIT",0,0,0,1001,6,0,41,337,2],["T.Henderson","RB","NE",0,0,0,987,9,1,40,254,1],["A.Rodgers","QB","PIT",3468,24,8,68,1,5,1,-9,0],["R.Dowdle","RB","CAR",0,0,0,1085,6,1,40,303,1],["C.Stroud","QB","HOU",3503,21,13,225,1,4,0,0,0],["W.Robinson","WR","NYG",0,0,0,5,0,0,92,1014,4],["D.Smith","WR","PHI",0,0,0,0,0,0,85,1078,4],["K.Pitts","WR","ATL",0,0,0,0,0,0,88,928,5],["L.Jackson","QB","BAL",2549,21,7,359,2,5,0,0,0],["T.Higgins","WR","CIN",0,0,0,0,0,0,59,846,11],["J.Johnson","QB","NO",372,1,2,56,1,1,77,889,3],["D.Moore","WR","CHI",2,1,0,94,1,0,62,788,8],["B.Hall","RB","NYJ",4,1,0,1065,4,2,36,350,1],["H.Henry","WR","NE",0,0,0,0,0,0,69,880,8],["D.Goedert","WR","PHI",0,0,0,1,1,0,64,624,12],["D.London","WR","ATL",0,0,0,0,0,0,68,919,7],["J.Jefferson","WR","MIN",0,0,0,7,0,0,84,1048,2],["M.Pittman","WR","IND",0,0,0,0,0,0,80,793,7],["C.Lamb","WR","DAL",0,0,0,2,0,0,75,1077,3],["K.Shakir","WR","BUF",0,0,0,5,0,0,91,843,4],["P.Washington","WR","JAX",0,0,0,2,0,0,65,954,6],["C.Loveland","WR","CHI",0,0,0,-2,0,0,70,906,6],["B.Purdy","QB","SF",2569,22,13,215,3,5,0,0,0],["J.Waddle","WR","MIA",8,0,0,28,0,0,64,910,6],["E.Egbuka","WR","TB",0,0,0,9,0,0,63,938,6],["D.Metcalf","WR","PIT",0,0,0,12,1,0,61,892,6],["T.Kelce","WR","KC",0,0,0,1,0,0,76,851,5],["J.Ferguson","WR","DAL",0,0,0,1,0,0,82,600,8],["R.Doubs","WR","GB",0,0,0,0,0,0,63,848,7],["D.Schultz","WR","HOU",0,0,0,0,0,0,87,836,3],["T.Warren","WR","IND",0,0,0,8,1,0,76,817,4],["J.Jennings","WR","SF",29,1,0,0,0,0,58,711,9],["K.Allen","WR","LAC",0,0,0,0,0,0,84,802,4],["D.Samuel","WR","WAS",0,0,0,75,1,0,72,727,5],["T.Pollard","RB","TEN",0,0,0,1082,5,2,33,206,0],["L.McConkey","WR","LAC",0,0,0,0,0,0,69,821,6],["H.Fannin","WR","CLE",0,0,0,13,1,1,72,731,6],["C.Ward","QB","TEN",3169,15,7,169,2,9,0,0,0],["A.Pierce","WR","IND",0,0,0,0,0,0,47,1003,6],["Z.Charbonnet","RB","SEA",0,0,0,752,12,0,20,144,0],["J.Meyers","WR","JAX",0,0,0,13,0,0,76,847,3],["Q.Johnston","WR","LAC",0,0,0,7,0,0,54,755,8],["B.Bowers","WR","LV",0,0,0,2,0,0,64,680,7],["T.Franklin","WR","DEN",0,0,0,12,0,0,65,709,6],["G.Smith","QB","LV",3025,19,17,115,0,1,0,0,0],["Q.Judkins","RB","CLE",0,0,0,829,7,0,26,171,0],["A.Barner","WR","SEA",0,0,0,16,1,0,58,586,7],["W.Marks","RB","HOU",0,0,0,832,3,1,26,227,3],["D.Montgomery","RB","DET",3,1,0,716,8,1,24,192,0],["G.Kittle","WR","SF",0,0,0,-3,0,0,58,634,7],["T.Tracy","RB","NYG",0,0,0,740,2,0,36,288,2],["T.Tucker","WR","LV",0,0,0,51,0,0,57,696,5],["C.Parkinson","WR","LA",0,0,0,0,0,0,51,560,9],["K.Monangai","RB","CHI",0,0,0,850,5,0,23,222,0],["R.Shaheed","WR","SEA",0,0,0,91,0,0,62,765,2],["R.Odunze","WR","CHI",0,0,0,0,0,0,48,749,6],["D.Kincaid","WR","BUF",0,0,0,0,0,0,48,682,7],["T.Tagovailoa","QB","MIA",2660,20,15,46,0,2,0,0,0],["K.Boutte","WR","NE",0,0,0,0,0,0,42,719,7],["T.Shough","QB","NO",2384,10,6,199,3,4,0,0,0],["C.Kupp","WR","SEA",0,0,1,0,0,0,62,750,3],["B.Thomas","WR","JAX",0,0,0,21,1,0,50,728,3],["J.Higgins","WR","HOU",0,0,0,0,0,0,50,623,6],["R.Rice","WR","KC",0,0,0,20,1,0,53,571,5],["K.Hunt","RB","KC",0,0,0,611,8,1,18,143,1],["C.Hubbard","RB","CAR",0,0,0,557,3,1,32,236,3],["C.Watson","WR","GB",0,0,0,3,0,0,38,647,7],["R.White","RB","TB",0,0,0,572,4,0,40,218,0],["B.Corum","RB","LA",0,0,0,865,6,0,13,73,0],["J.Flacco","QB","CLE",2479,15,10,52,1,4,0,0,0],["J.Croskey-Merritt","RB","WAS",0,0,0,805,8,2,9,68,0],["L.Burden","WR","CHI",0,0,0,33,0,0,53,718,2],["O.Gadsden","WR","LAC",0,0,0,0,0,0,52,694,3],["B.Irving","RB","TB",0,0,0,588,1,1,30,277,3],["M.Hollins","WR","NE",0,0,0,4,0,0,52,679,3],["M.Brown","WR","KC",0,0,0,0,0,0,49,587,5],["J.Downs","WR","IND",0,0,0,-2,0,0,58,559,4],["O.Hampton","RB","LAC",0,0,0,544,4,0,32,192,1],["J.Addison","WR","MIN",0,0,0,81,1,0,42,610,3],["J.Fields","QB","NYJ",1259,7,1,391,4,3,0,0,0],["M.Evans","WR","TB",0,0,0,1,0,0,49,539,5],["J.Burrow","QB","CIN",1809,17,5,42,0,1,0,0,0],["M.Andrews","WR","BAL",0,0,0,48,1,0,48,422,5],["J.Mason","RB","MIN",0,0,0,758,6,1,14,51,0],["M.Jones","QB","SF",2155,13,6,81,0,3,0,0,0],["M.Wilson","WR","ARI",0,0,0,0,0,0,37,547,6],["C.Skattebo","RB","NYG",0,0,0,412,5,1,24,207,2],["M.Harrison","WR","ARI",0,0,0,0,0,0,41,608,4],["K.Vidal","RB","LAC",0,0,0,674,3,0,18,156,1],["Z.Ertz","WR","WAS",0,0,0,0,0,0,50,504,4],["J.McCarthy","QB","MIN",1632,11,12,191,4,2,0,0,0],["M.Mariota","QB","WAS",1695,10,7,303,1,3,0,0,0],["C.Okonkwo","WR","TEN",0,0,0,0,0,0,56,560,2],["T.Allgeier","RB","ATL",0,0,0,514,8,0,14,96,0],["J.Jeudy","WR","CLE",0,0,0,5,0,0,50,602,2],["M.Mims","WR","DEN",0,0,0,78,1,0,49,477,2],["C.Otton","WR","TB",0,0,0,0,0,0,59,572,1],["B.Strange","WR","JAX",0,0,0,0,0,0,48,549,3],["A.Jones","RB","MIN",0,0,0,548,2,0,28,199,1],["J.Coker","WR","CAR",0,0,0,0,0,0,42,528,4],["D.Douglas","WR","NE",0,0,0,21,0,0,39,531,4],["T.Kraft","WR","GB",0,0,0,3,0,0,32,489,6],["M.Penix","QB","ATL",1982,9,3,77,1,3,0,0,0],["E.Ayomanor","WR","TEN",0,0,0,0,0,0,41,515,4],["P.Freiermuth","WR","PIT",0,0,0,0,0,0,42,504,4],["C.Dike","WR","TEN",0,0,0,18,0,0,48,423,4],["J.Dobbins","RB","DEN",0,0,0,772,4,0,11,37,0],["K.Coleman","WR","BUF",0,0,0,0,0,0,40,450,5],["T.McLaurin","WR","WAS",0,0,0,0,0,0,38,582,3],["R.Flournoy","WR","DAL",0,0,0,25,0,0,40,475,4],["D.Knox","WR","BUF",0,0,0,0,0,0,42,479,4],["T.Hockenson","WR","MIN",0,0,0,0,0,0,51,438,3],["J.Daniels","QB","WAS",1262,8,3,283,2,2,0,0,0],["T.Spears","RB","TEN",0,0,0,283,2,0,45,264,0],["M.Washington","WR","MIA",0,0,0,110,1,1,46,317,3],["X.Hutchinson","WR","HOU",0,0,0,22,0,0,41,493,3],["X.Worthy","WR","KC",0,0,0,87,0,0,42,532,1],["E.Engram","WR","DEN",0,0,0,7,0,0,53,487,1],["S.LaPorta","WR","DET",0,0,0,0,0,0,40,489,3],["D.Singletary","RB","NYG",0,0,0,437,5,0,18,151,0],["J.Tonges","WR","SF",0,0,0,0,0,0,40,366,5],["A.Kamara","RB","NO",0,0,0,471,1,1,33,186,0],["K.Cousins","QB","ATL",1721,10,5,17,1,2,0,0,0],["G.Wilson","WR","NYJ",0,0,0,0,0,0,36,395,4],["M.Carter","RB","ARI",0,0,0,333,1,0,33,267,0],["J.Nailor","WR","MIN",0,0,0,13,0,0,29,444,4],["Ty.Johnson","RB","BUF",0,0,0,200,3,0,24,231,2],["D.Slayton","WR","NYG",0,0,0,0,0,0,37,538,1],["C.Kirk","WR","HOU",0,0,0,0,0,0,38,403,3],["T.Hill","RB","MIA",57,1,0,114,1,1,32,356,1],["N.Chubb","RB","HOU",0,0,0,568,3,0,13,67,0],["O.Zaccheaus","WR","CHI",0,0,0,25,0,0,41,330,3],["J.Hill","WR","BAL",0,0,0,93,2,0,36,309,1],["B.Tuten","RB","JAX",0,0,0,358,5,1,10,79,2],["S.Rattler","QB","NO",1586,8,5,168,0,5,1,0,0],["Mi.Wilson","WR","ARI",0,0,0,0,0,0,41,459,1],["Z.Knight","RB","ARI",0,0,0,269,4,1,22,160,1],["E.Wilson","RB","GB",0,0,0,499,3,0,15,99,0],["K.Bourne","WR","SF",0,0,0,0,0,0,37,551,0],["C.Rodriguez","RB","WAS",0,0,0,500,6,0,3,30,0],["G.Helm","WR","TEN",0,0,0,0,0,0,44,357,2],["S.Tucker","RB","TB",0,0,0,320,7,0,8,34,1],["X.Legette","WR","CAR",0,0,0,0,0,0,36,371,3],["R.Wilson","QB","NYG",831,3,3,106,0,0,12,166,2],["C.Austin","WR","PIT",0,0,0,0,0,0,34,380,3],["A.Mitchell","WR","IND",0,0,0,-4,0,0,33,453,2],["A.Iosivas","WR","CIN",0,0,0,14,0,0,33,435,2],["D.Sampson","RB","CLE",0,0,0,175,0,0,33,271,2],["C.Kmet","WR","CHI",0,0,0,1,0,0,33,378,3],["D.Waller","WR","MIA",0,0,0,4,0,0,24,283,6],["R.Pearsall","WR","SF",0,0,0,-2,0,0,36,528,0],["M.Golden","WR","GB",0,0,0,49,0,0,33,445,1],["I.Pacheco","RB","KC",0,0,0,462,1,0,19,101,1],["J.Smith","WR","PIT",0,0,0,70,1,0,40,221,2],["M.Taylor","WR","NYJ",0,0,0,0,0,0,44,369,1],["D.Njoku","WR","CLE",0,0,0,0,0,0,33,293,4],["K.Turpin","WR","DAL",0,0,0,89,0,1,26,396,2],["S.Shepard","WR","TB",0,0,0,19,0,0,39,371,1],["T.Higbee","WR","LA",0,0,0,0,0,0,29,365,3],["P.Bryant","WR","DEN",0,0,0,1,0,0,35,412,1],["D.Mooney","WR","ATL",0,0,0,0,0,0,32,443,1],["S.Sanders","QB","CLE",1400,7,10,171,1,3,0,0,0],["C.Godwin","WR","TB",0,0,0,0,0,0,33,360,2],["T.Thornton","WR","KC",0,0,0,0,0,0,19,438,3],["N.Fant","WR","CIN",0,0,0,0,0,0,34,288,3],["D.Robinson","WR","SF",0,0,0,6,0,0,29,388,2],["S.Perine","RB","CIN",0,0,0,382,3,2,17,87,0],["K.Murray","QB","ARI",962,6,3,175,1,2,0,0,0],["I.TeSlaa","WR","DET",0,0,0,0,0,0,16,239,6],["D.Wicks","WR","GB",0,0,0,6,0,0,30,332,2],["G.Dortch","WR","ARI",0,0,0,15,1,0,29,206,3],["M.Mayer","WR","LV",0,0,0,0,0,0,35,328,1],["J.Smith-Schuster","WR","KC",0,0,0,0,0,0,33,345,1],["T.Harris","WR","LAC",0,0,0,10,0,0,32,344,1],["D.Washington","WR","PIT",0,0,0,0,0,0,31,364,1],["J.Metchie","WR","PHI",0,0,0,-5,0,0,33,274,2],["J.McNichols","RB","WAS",0,0,0,223,1,1,25,196,0],["M.Gesicki","WR","CIN",0,0,0,0,0,0,28,307,2],["D.Gabriel","QB","CLE",937,7,2,87,0,0,0,0,0],["V.Jefferson","WR","TEN",0,0,0,0,0,0,29,350,1],["I.Davis","RB","NYJ",0,0,0,236,1,0,21,186,0],["T.Tremble","WR","CAR",0,0,0,0,0,0,30,271,2],["J.Noel","WR","HOU",0,0,0,12,0,0,26,292,2],["C.Wentz","QB","MIN",1216,6,5,57,0,0,0,0,0],["K.Juszczyk","WR","SF",0,0,0,-6,0,0,29,273,2],["T.Lockett","WR","TEN",0,0,0,0,0,0,32,291,1],["D.Hopkins","WR","BAL",0,0,0,0,0,0,22,330,2],["D.Mills","QB","HOU",915,5,1,63,1,0,0,0,0],["D.Vele","WR","NO",0,0,0,0,0,0,25,293,2],["G.Dulcich","WR","MIA",0,0,0,-7,0,0,26,335,1],["B.Cooks","WR","BUF",0,0,0,0,0,0,29,357,0],["A.Hooper","WR","NE",0,0,0,0,0,0,24,287,2],["J.Reed","WR","GB",0,0,0,42,0,0,23,250,2],["T.Hunter","WR","JAX",0,0,0,0,0,0,28,298,1],["I.Likely","WR","BAL",0,0,0,0,0,0,27,307,1],["B.Smith","RB","KC",0,0,0,151,0,0,25,172,1],["D.Allen","WR","LA",0,0,0,0,0,0,24,208,3],["R.Davis","RB","BUF",0,0,0,275,0,0,12,95,2],["HOU Defense","DEF","HOU",0,0,0,0,0,0,0,1640,0],["SEA Defense","DEF","SEA",0,0,0,0,0,0,0,1580,0],["NE Defense","DEF","NE",0,0,0,0,0,0,0,1340,0],["PIT Defense","DEF","PIT",0,0,0,0,0,0,0,1310,0],["DEN Defense","DEF","DEN",0,0,0,0,0,0,0,1300,0],["CHI Defense","DEF","CHI",0,0,0,0,0,0,0,1240,0],["JAX Defense","DEF","JAX",0,0,0,0,0,0,0,1230,0],["LA Defense","DEF","LA",0,0,0,0,0,0,0,1200,0],["CLE Defense","DEF","CLE",0,0,0,0,0,0,0,1190,0],["ATL Defense","DEF","ATL",0,0,0,0,0,0,0,1130,0],["NO Defense","DEF","NO",0,0,0,0,0,0,0,1050,0],["MIN Defense","DEF","MIN",0,0,0,0,0,0,0,1050,0],["LAC Defense","DEF","LAC",0,0,0,0,0,0,0,1000,0],["BUF Defense","DEF","BUF",0,0,0,0,0,0,0,970,0],["PHI Defense","DEF","PHI",0,0,0,0,0,0,0,950,0],["DET Defense","DEF","DET",0,0,0,0,0,0,0,950,0],["TB Defense","DEF","TB",0,0,0,0,0,0,0,950,0],["CAR Defense","DEF","CAR",0,0,0,0,0,0,0,890,0],["MIA Defense","DEF","MIA",0,0,0,0,0,0,0,890,0],["IND Defense","DEF","IND",0,0,0,0,0,0,0,890,0],["ARI Defense","DEF","ARI",0,0,0,0,0,0,0,880,0],["TEN Defense","DEF","TEN",0,0,0,0,0,0,0,860,0],["BAL Defense","DEF","BAL",0,0,0,0,0,0,0,840,0],["CIN Defense","DEF","CIN",0,0,0,0,0,0,0,830,0],["WAS Defense","DEF","WAS",0,0,0,0,0,0,0,780,0],["LV Defense","DEF","LV",0,0,0,0,0,0,0,770,0],["NYG Defense","DEF","NYG",0,0,0,0,0,0,0,750,0],["GB Defense","DEF","GB",0,0,0,0,0,0,0,670,0],["SF Defense","DEF","SF",0,0,0,0,0,0,0,650,0],["DAL Defense","DEF","DAL",0,0,0,0,0,0,0,650,0],["KC Defense","DEF","KC",0,0,0,0,0,0,0,630,0],["NYJ Defense","DEF","NYJ",0,0,0,0,0,0,0,460,0],["J.Myers","K","SEA",0,0,0,0,0,0,0,2390,0],["K.Fairbairn","K","HOU",0,0,0,0,0,0,0,2140,0],["B.Aubrey","K","DAL",0,0,0,0,0,0,0,1870,0],["C.Dicker","K","LAC",0,0,0,0,0,0,0,1730,0],["C.Little","K","JAX",0,0,0,0,0,0,0,1710,0],["A.Borregales","K","NE",0,0,0,0,0,0,0,1680,0],["W.Reichard","K","MIN",0,0,0,0,0,0,0,1590,0],["C.Boswell","K","PIT",0,0,0,0,0,0,0,1570,0],["C.McLaughlin","K","TB",0,0,0,0,0,0,0,1560,0],["E.Pineiro","K","SF",0,0,0,0,0,0,0,1540,0],["W.Lutz","K","DEN",0,0,0,0,0,0,0,1520,0],["J.Bates","K","DET",0,0,0,0,0,0,0,1520,0],["C.Santos","K","CHI",0,0,0,0,0,0,0,1510,0],["H.Butker","K","KC",0,0,0,0,0,0,0,1490,0],["T.Loop","K","BAL",0,0,0,0,0,0,0,1440,0],["E.McPherson","K","CIN",0,0,0,0,0,0,0,1360,0],["J.Slye","K","TEN",0,0,0,0,0,0,0,1350,0],["M.Prater","K","BUF",0,0,0,0,0,0,0,1340,0],["R.Patterson","K","MIA",0,0,0,0,0,0,0,1320,0],["C.Ryland","K","ARI",0,0,0,0,0,0,0,1300,0],["B.Grupe","K","NO",0,0,0,0,0,0,0,1290,0],["N.Folk","K","NYJ",0,0,0,0,0,0,0,1270,0],["J.Elliott","K","PHI",0,0,0,0,0,0,0,1240,0],["R.Fitzgerald","K","CAR",0,0,0,0,0,0,0,1190,0],["B.McManus","K","GB",0,0,0,0,0,0,0,1160,0],["H.Mevis","K","LA",0,0,0,0,0,0,0,1150,0],["A.Szmyt","K","CLE",0,0,0,0,0,0,0,1120,0],["D.Carlson","K","LV",0,0,0,0,0,0,0,1030,0],["Z.Gonzalez","K","ATL",0,0,0,0,0,0,0,960,0],["M.Gay","K","WAS",0,0,0,0,0,0,0,910,0]];
+
+// Index keys into baseline entries (raw stats format)
+const BL = { NAME:0, POS:1, TEAM:2, P_YDS:3, P_TD:4, INT:5, R_YDS:6, R_TD:7, FL:8, REC:9, REC_YDS:10, REC_TD:11 };
+
+// Scoring format profiles — recompute 2025 fantasy points for the format the user picks
+const SCORING_FORMATS = {
+  ppr:  { name:'1 PPR',              rec:1.0, recYd:.10, recTD:6, rYd:.10, rTD:6, fL:-2, pYd:.04, pTD:4, intT:-2 },
+  half: { name:'0.5 PPR',            rec:0.5, recYd:.10, recTD:6, rYd:.10, rTD:6, fL:-2, pYd:.04, pTD:4, intT:-2 },
+  std:  { name:'Standard (no PPR)',  rec:0.0, recYd:.10, recTD:6, rYd:.10, rTD:6, fL:-2, pYd:.04, pTD:4, intT:-2 },
+  pp6:  { name:'1 PPR + 6pt pass TD', rec:1.0, recYd:.10, recTD:6, rYd:.10, rTD:6, fL:-2, pYd:.04, pTD:6, intT:-2 }
+};
+
+function getScoringFormat(){ return SCORING_FORMATS[state.scoringFormat || 'ppr'] || SCORING_FORMATS.ppr; }
+
+function computeFantasyPoints(e, fmt){
+  return (e[BL.P_YDS]*fmt.pYd) + (e[BL.P_TD]*fmt.pTD) + (e[BL.INT]*fmt.intT)
+       + (e[BL.R_YDS]*fmt.rYd) + (e[BL.R_TD]*fmt.rTD) + (e[BL.FL]*fmt.fL)
+       + (e[BL.REC]*fmt.rec)   + (e[BL.REC_YDS]*fmt.recYd) + (e[BL.REC_TD]*fmt.recTD);
+}
+
+// 2026 NFL bye weeks per team (source: NFL.com schedule release)
+const BYE_WEEKS_2026 = {
+  KC:5, CAR:5,
+  MIA:6, CIN:6, DET:6, MIN:6,
+  BUF:7, LAC:7, WAS:7, JAX:7,
+  NYG:8, NO:8, SF:8, HOU:8,
+  TEN:9, PIT:9,
+  DEN:10, PHI:10, CHI:10, TB:10,
+  NE:11, CLE:11, SEA:11, GB:11, ATL:11, LA:11, LAR:11,
+  IND:13, NYJ:13, LV:13, BAL:13,
+  DAL:14, ARI:14
+};
+
+// Build lookup tables on load — exact name + "F.Lastname" abbreviation
+const BASELINE_INDEX = (() => {
+  const byKey = {};         // normalized id → entry
+  const byAbbrev = {};      // "p-nacua" pattern from full name
+  const byAbbrevPos = {};   // "p-nacua-wr" — disambiguate same abbreviation
+  for (const entry of BASELINE_2025){
+    const [name, pos] = entry;
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    byKey[id] = entry;
+    byAbbrev[id] = entry; // baseline already in abbreviated form
+    byAbbrevPos[id + '-' + pos.toLowerCase()] = entry;
+  }
+  return { byKey, byAbbrev, byAbbrevPos };
+})();
+
+// Match a full player name from the rankings CSV to a baseline entry.
+// Examples: "Puka Nacua" → "P.Nacua", "Ja'Marr Chase" → "J.Chase", "Travis Etienne Jr." → "T.Etienne"
+function findBaselineFor(fullName, pos){
+  if (!fullName) return null;
+  // Clean: strip suffixes (Jr., III, etc.), apostrophes
+  const cleaned = fullName.replace(/[.,]/g,'').replace(/\b(jr|sr|ii|iii|iv|v)\b/gi,'').trim();
+  const parts = cleaned.split(/\s+/);
+  if (parts.length < 2) return null;
+  const firstInitial = parts[0][0];
+  const lastName = parts[parts.length - 1];
+  // Try abbreviated form: "F.Lastname"
+  const abbrev = (firstInitial + '.' + lastName).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  // Check position match first (more accurate)
+  if (pos && BASELINE_INDEX.byAbbrevPos[abbrev + '-' + pos.toLowerCase()]) {
+    return BASELINE_INDEX.byAbbrevPos[abbrev + '-' + pos.toLowerCase()];
+  }
+  if (BASELINE_INDEX.byAbbrev[abbrev]) return BASELINE_INDEX.byAbbrev[abbrev];
+  // Try first 2 letters disambiguator (Ty.Johnson, Mi.Wilson)
+  const twoLetter = (parts[0].slice(0,2) + '.' + lastName).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  if (BASELINE_INDEX.byAbbrev[twoLetter]) return BASELINE_INDEX.byAbbrev[twoLetter];
+  return null;
+}
+
+// Annotate players[] with 2025 baseline stats. Called after loading any rankings CSV.
+function attach2025Baseline(){
+  if (!state.players || !state.players.length) return 0;
+  const fmt = getScoringFormat();
+  // Compute fpts for every baseline entry under the active scoring format, then re-rank.
+  const computed = BASELINE_2025.map(entry => ({
+    entry, fpts: computeFantasyPoints(entry, fmt)
+  }));
+  computed.sort((a,b) => b.fpts - a.fpts);
+  const nameMap = {};
+  computed.forEach((c, i) => {
+    nameMap[c.entry[BL.NAME]] = { fpts: c.fpts, finish: i + 1, team: c.entry[BL.TEAM] };
+  });
+  let matched = 0;
+  for (const p of state.players){
+    const b = findBaselineFor(p.name, p.pos);
+    if (b){
+      const info = nameMap[b[BL.NAME]];
+      if (info){
+        p.lastFpts = Math.round(info.fpts * 10) / 10;
+        p.lastFinish = info.finish;
+        if (!p.team) p.team = info.team;     // backfill team from baseline
+        matched++;
+      }
+    } else {
+      delete p.lastFpts;
+      delete p.lastFinish;
+    }
+    // Bye week from team
+    p.bye = (p.team && BYE_WEEKS_2026[p.team]) || null;
+  }
+  return matched;
+}
+
+// ============================================================
+// COMPOSITE RANKER — z-score normalized blend of multiple sources.
+// Weights are user-tunable; ADP defaults to lowest weight by design.
+// ============================================================
+const DEFAULT_COMPOSITE_WEIGHTS = {
+  your: 0.35,   // your CSV rank (highest — you know your league)
+  espn: 0.25,   // ESPN draft rank (platform-specific bias)
+  last: 0.25,   // 2025 actual finish (production reality)
+  adp:  0.15    // ADP (lowest — too consensus-driven, doesn't reflect format edge)
+};
+
+function getCompositeWeights(){
+  return state.compositeWeights || {...DEFAULT_COMPOSITE_WEIGHTS};
+}
+
+// Z-score helper: normalize an array of values to z-scores (mean 0, std 1).
+// Lower input = lower z (better, since these are ranks).
+function zScoreMap(values){
+  const valid = values.filter(v => v != null && !isNaN(v));
+  if (valid.length < 2) return new Map();
+  const mean = valid.reduce((a,b)=>a+b,0) / valid.length;
+  const variance = valid.reduce((a,b)=>a + (b-mean)*(b-mean), 0) / valid.length;
+  const std = Math.sqrt(variance) || 1;
+  const map = new Map();
+  values.forEach((v, i) => {
+    if (v == null || isNaN(v)) return;
+    map.set(i, (v - mean) / std);
+  });
+  return map;
+}
+
+function computeCompositeRanks(){
+  if (!state.players || !state.players.length) return;
+  const baseRank = p => (p._originalRank != null ? p._originalRank : p.rank);
+  const weights = getCompositeWeights();
+
+  // Step 1: z-score each source across the WHOLE pool
+  const players = state.players;
+  const yourVals = players.map(p => baseRank(p));
+  const adpVals  = players.map(p => p.adp);
+  const espnVals = players.map(p => p.espnRank ?? null);
+  const lastVals = players.map(p => p.lastFinish ?? null);
+  const zYour = zScoreMap(yourVals);
+  const zAdp  = zScoreMap(adpVals);
+  const zEspn = zScoreMap(espnVals);
+  const zLast = zScoreMap(lastVals);
+
+  // Step 2: weighted blend of z-scores per player, rebalance weights for missing sources
+  for (let i = 0; i < players.length; i++){
+    const p = players[i];
+    const sources = [];
+    if (zYour.has(i)) sources.push({ z: zYour.get(i), w: weights.your, k:'your', raw: yourVals[i] });
+    if (zAdp.has(i))  sources.push({ z: zAdp.get(i),  w: weights.adp,  k:'adp',  raw: adpVals[i] });
+    if (zEspn.has(i)) sources.push({ z: zEspn.get(i), w: weights.espn, k:'espn', raw: espnVals[i] });
+    if (zLast.has(i)) sources.push({ z: zLast.get(i), w: weights.last, k:'last', raw: lastVals[i] });
+    if (!sources.length){
+      p.compositeScore = 999; p.compositeSources = []; p.compositeSpread = null; continue;
+    }
+    const totalW = sources.reduce((sum, x) => sum + x.w, 0);
+    const blendedZ = sources.reduce((sum, x) => sum + x.z * (x.w / totalW), 0);
+    p.compositeScore = blendedZ;
+    p.compositeSources = sources.map(x => x.k);
+    // Spread = std-dev of raw source ranks for this player (how much they disagree)
+    const rawRanks = sources.map(x => x.raw);
+    if (rawRanks.length >= 2){
+      const mean = rawRanks.reduce((a,b)=>a+b,0) / rawRanks.length;
+      const variance = rawRanks.reduce((a,b)=>a + (b-mean)*(b-mean), 0) / rawRanks.length;
+      p.compositeSpread = Math.round(Math.sqrt(variance));
+    } else {
+      p.compositeSpread = 0;
+    }
+  }
+  // Step 3: sort by blended z and assign 1..N composite ranks
+  const valid = [...players].filter(p => p.compositeScore != null && p.compositeScore < 999)
+    .sort((a,b) => a.compositeScore - b.compositeScore);
+  valid.forEach((p, i) => p.compositeRank = i + 1);
+}
+
+// Apply composite ranking as the active rank. Stores originals so user can revert.
+function applyComposite(){
+  if (!state.players || !state.players.length) return;
+  computeCompositeRanks();
+  for (const p of state.players){
+    if (p._originalRank == null) p._originalRank = p.rank;
+    if (p.compositeRank != null) p.rank = p.compositeRank;
+  }
+  state.compositeActive = true;
+  render();
+}
+function revertComposite(){
+  if (!state.players) return;
+  for (const p of state.players){
+    if (p._originalRank != null){
+      p.rank = p._originalRank;
+      delete p._originalRank;
+    }
+  }
+  computeCompositeRanks(); // recompute display based on restored originals
+  state.compositeActive = false;
+  render();
+}
+
+/* ============================================================
    STATE
    ============================================================ */
 const STORAGE_KEY = 'ff-draft-tracker-v1';
@@ -718,6 +1132,19 @@ const POS_ORDER = ['QB','RB','WR','TE','DEF','K'];
 // Eligibility sets for flex slots
 const FLEX_ELIGIBLE  = new Set(['RB','WR','TE']);
 const SFLEX_ELIGIBLE = new Set(['QB','RB','WR','TE']);
+
+// Auto tier from overall rank — cross-position brackets sized to common ADP tier breaks.
+// Roughly: round 1 elite (T1), round 2-3 high (T2-3), starters (T4-5), depth (T6-7), late bench (T8+).
+function autoTierFromRank(rank){
+  if (rank <= 8)   return 1;
+  if (rank <= 20)  return 2;
+  if (rank <= 36)  return 3;
+  if (rank <= 60)  return 4;
+  if (rank <= 84)  return 5;
+  if (rank <= 108) return 6;
+  if (rank <= 132) return 7;
+  return 8;
+}
 
 // Pick-value grade — letter + numeric delta. Positive value = pick made later than expected (steal).
 // Baseline = ADP (market consensus); falls back to your rank if ADP missing.
@@ -757,7 +1184,7 @@ let state = loadState() || {
   filterPos: 'ALL',
   search: '',
   hideDW: true,
-  sortCol: 'rank',
+  sortCol: 'comp',
   sortDir: 'asc',        // 'asc' | 'desc'
   setupDone: false       // first-launch wizard
 };
@@ -769,6 +1196,11 @@ if (!state.sortDir) state.sortDir = 'asc';
 if (typeof state.targets.FLEX === 'undefined') state.targets.FLEX = 0;
 if (typeof state.targets.SFLEX === 'undefined') state.targets.SFLEX = 0;
 if (typeof state.targets.BENCH === 'undefined') state.targets.BENCH = 6;
+if (!state.theme) state.theme = 'dark';
+if (!state.queue) state.queue = [];        // array of player IDs, ordered
+if (!state.target) state.target = {};
+if (!state.scoringFormat) state.scoringFormat = 'ppr';
+if (!state.notes) state.notes = {};        // playerId -> note text
 
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
 function loadState(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ return null; } }
@@ -795,13 +1227,13 @@ function splitCSVLine(line){
 
 // Auto-detect column index for a logical field. Returns -1 if no match.
 function autoDetectColumn(field, headers){
-  // Try exact matches first, then regex patterns
   const patterns = {
     name:  [/^(player|player.?name|name|athlete|full.?name)$/, /player|name|athlete/],
     pos:   [/^(pos|position|pos\.)$/, /^pos/, /position/],
-    rank:  [/^(your.?rank|overall.?rank|rank|ovr|tier|ecr)$/, /your.?rank|overall.?rank|^rank$|^ovr$|ecr|tier/, /rank/],
+    rank:  [/^(your.?rank|overall.?rank|rank|ovr|ecr)$/, /your.?rank|overall.?rank|^rank$|^ovr$|ecr/, /^rank/],
     adp:   [/^(adp|average.?draft.?position|draft.?position)$/, /adp|average.?draft|draft.?pos/, /draft/],
-    photo: [/^(photo|image|headshot|player.?photo|img|picture)$/, /photo|headshot|image|picture|^img$/, /url/]
+    photo: [/^(photo|image|headshot|player.?photo|img|picture)$/, /photo|headshot|image|picture|^img$/, /url/],
+    tier:  [/^(tier|tiers|tier#|tier_no|tier.?number|group)$/, /^tier/, /tier/]
   };
   const tries = patterns[field] || [];
   for (const pat of tries){
@@ -827,7 +1259,8 @@ function parseCSVRaw(text){
     pos:   autoDetectColumn('pos', headersLower),
     rank:  autoDetectColumn('rank', headersLower),
     adp:   autoDetectColumn('adp', headersLower),
-    photo: autoDetectColumn('photo', headersLower)
+    photo: autoDetectColumn('photo', headersLower),
+    tier:  autoDetectColumn('tier', headersLower)
   };
   // If we couldn't find a "your rank" but there are multiple rank-ish columns, the regex already handles it
   return { headers, rows, autoMap };
@@ -842,13 +1275,15 @@ function buildPlayersFromMapping(raw, mapping){
     const rank = parseFloat(cells[mapping.rank]);
     const adp = parseFloat(cells[mapping.adp]);
     const photo = mapping.photo >= 0 ? (cells[mapping.photo] || '').trim() : '';
+    const tier = mapping.tier >= 0 ? parseInt(cells[mapping.tier], 10) : NaN;
     if (!name || !pos || isNaN(rank)) continue;
     out.push({
       id: name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
       name, pos: normalizePos(pos),
       rank,
       adp: isNaN(adp) ? rank + 5 : adp,
-      photo
+      photo,
+      tier: isNaN(tier) ? null : tier  // null = no CSV tier, will auto-compute
     });
   }
   return out.sort((a,b) => a.rank - b.rank);
@@ -974,11 +1409,46 @@ function availablePlayers(includeDontWant=false){
 function bestAtPos(list, pos, k=1){
   return list.filter(p=>p.pos===pos).sort((a,b)=>a.rank-b.rank).slice(0,k);
 }
-function simulateOpponentPicks(available, count){
-  // Opponents take best ADP first (don't-want is our preference only)
-  const sorted = [...available].sort((a,b)=>a.adp-b.adp);
-  const taken = new Set(sorted.slice(0, count).map(p=>p.id));
-  return available.filter(p=>!taken.has(p.id));
+function simulateOpponentPicks(available, count, startOverall){
+  // Smarter sim: model each opponent team's current roster.
+  // Each pick goes to top-ADP player at the team's most-needed position.
+  // Falls back to pure ADP if no clear need.
+  if (!startOverall) startOverall = currentOverall();
+  let pool = [...available];
+  const teamRosters = {};
+  for (let s = 1; s <= state.teams; s++) teamRosters[s] = {QB:0,RB:0,WR:0,TE:0,DEF:0,K:0};
+  for (const pk of state.picks){
+    const player = state.players.find(x => x.id === pk.playerId);
+    if (player) teamRosters[pk.slot][player.pos] = (teamRosters[pk.slot][player.pos]||0) + 1;
+  }
+  for (let i = 0; i < count; i++){
+    const ov = startOverall + i;
+    const { slot } = pickToSlot(ov, state.teams);
+    if (slot === state.slot) continue;
+    const have = teamRosters[slot];
+    const needs = {};
+    let topNeed = null, topNeedScore = -1;
+    const lateThreshold = state.teams * Math.max(state.rounds - 3, 8);
+    for (const pos of POS_ORDER){
+      const target = state.targets[pos] || 0;
+      const gap = Math.max(0, target - (have[pos]||0));
+      const isLateOnly = (pos === 'DEF' || pos === 'K') && ov < lateThreshold;
+      const score = isLateOnly ? -100 : gap;
+      needs[pos] = score;
+      if (score > topNeedScore){ topNeedScore = score; topNeed = pos; }
+    }
+    const byAdp = pool.slice().sort((a,b) => a.adp - b.adp);
+    let candidate = null;
+    if (topNeedScore > 0){
+      const needed = byAdp.filter(p => (needs[p.pos]||0) > 0 && p.adp <= ov + 6);
+      candidate = needed.find(p => p.pos === topNeed) || needed[0];
+    }
+    if (!candidate) candidate = byAdp[0];
+    if (!candidate) break;
+    teamRosters[slot][candidate.pos] = (teamRosters[slot][candidate.pos]||0) + 1;
+    pool = pool.filter(p => p.id !== candidate.id);
+  }
+  return pool;
 }
 
 function strategySignals(){
@@ -996,10 +1466,10 @@ function strategySignals(){
   // Project pool at my next pick (after this one) and the one after
   const myNext1 = nextMyPick(cur+1); // after we pick now
   const gap1 = myNext1 ? (myNext1 - (cur+1)) : 0;
-  const after1 = myNext1 ? simulateOpponentPicks(avail, gap1) : avail;
+  const after1 = myNext1 ? simulateOpponentPicks(avail, gap1, cur+1) : avail;
   const myNext2 = myNext1 ? nextMyPick(myNext1+1) : null;
   const gap2 = myNext2 ? (myNext2 - (myNext1+1)) : 0;
-  const after2 = myNext2 ? simulateOpponentPicks(after1, gap2) : after1;
+  const after2 = myNext2 ? simulateOpponentPicks(after1, gap2, myNext1+1) : after1;
 
   // Best available now / next / next+1 per position
   const bestNow = {}, bestNext = {}, bestNext2 = {};
@@ -1157,7 +1627,25 @@ function getRecs(sig){
     // Target bonus — give starred players a meaningful boost so they surface in top-3 when appropriate
     const targetBonus = (state.target && state.target[p.id]) ? 12 : 0;
 
-    const total = needScore + valueScore + rankScore + scarcityScore + targetBonus;
+    // PRODUCTION (0-20): proven 2025 producers + bonus when market is sleeping on them.
+    // Penalty when current ranking is wildly above last year's finish (overrank risk).
+    let productionScore = 0;
+    if (p.lastFinish != null){
+      const yearDelta = p.lastFinish - p.rank;  // positive = sleeper (market drafting late)
+      // Floor: top-24 finish in 2025 = automatic credibility
+      if (p.lastFinish <= 24)      productionScore += 5;
+      else if (p.lastFinish <= 60) productionScore += 3;
+      // Sleeper boost: market dropping a proven producer
+      if (yearDelta >= 30)      productionScore += 12;
+      else if (yearDelta >= 15) productionScore += 8;
+      else if (yearDelta >= 5)  productionScore += 4;
+      // Overrank penalty: market hyping a player who didn't produce last year
+      else if (yearDelta <= -30) productionScore -= 6;
+      else if (yearDelta <= -15) productionScore -= 3;
+      productionScore = Math.max(-6, Math.min(20, productionScore));
+    }
+
+    const total = needScore + valueScore + rankScore + scarcityScore + targetBonus + productionScore;
 
     // ============ PROS / CONS ============
     const pros = [];
@@ -1229,6 +1717,20 @@ function getRecs(sig){
       cons.push(`You marked this player as Don't-Want`);
     }
 
+    // 2025 production pros/cons
+    if (p.lastFinish != null){
+      const yearDelta = p.lastFinish - p.rank;
+      if (yearDelta >= 15){
+        pros.push(`Finished #${p.lastFinish} in 2025 — market is sleeping on a proven producer (+${yearDelta} vs current rank)`);
+      } else if (p.lastFinish <= 12){
+        pros.push(`Elite 2025 finish (#${p.lastFinish}, ${p.lastFpts} pts) — proven top-tier producer`);
+      } else if (p.lastFinish <= 36 && yearDelta >= 0){
+        pros.push(`Solid 2025 finish (#${p.lastFinish}, ${p.lastFpts} pts) — known quantity`);
+      } else if (yearDelta <= -20){
+        cons.push(`2025 finish was only #${p.lastFinish} — current rank #${p.rank} bakes in a big leap from last year`);
+      }
+    }
+
     // Target flag pro
     if (state.target && state.target[p.id]){
       pros.push(`⭐ You flagged this player as a Target`);
@@ -1245,7 +1747,7 @@ function getRecs(sig){
     return {
       player: p,
       total,
-      breakdown: { need: needScore, value: valueScore, rank: rankScore, scarcity: scarcityScore, adpDelta, drop, needGap },
+      breakdown: { need: needScore, value: valueScore, rank: rankScore, scarcity: scarcityScore, production: productionScore, adpDelta, drop, needGap },
       why: whys.join(' · '),
       pros,
       cons
@@ -1278,6 +1780,70 @@ function render(){
   renderPickBar();
   renderUrgency(sig);
   renderEndOfDraft();
+  renderCompositeStatus();
+  renderRunAlert();
+  renderQueue();
+  renderStackHandcuff();
+  renderPickHistory();
+}
+
+function renderCompositeStatus(){
+  const useBtn = el('useCompositeBtn');
+  const revertBtn = el('revertCompositeBtn');
+  const note = el('compositeNote');
+  if (!useBtn) return;
+  if (state.compositeActive){
+    useBtn.style.display = 'none';
+    revertBtn.style.display = '';
+    note.innerHTML = `<span style="color:var(--good)">✓ Composite ranking active</span> — your CSV ranks are saved and can be restored with Revert.`;
+  } else {
+    useBtn.style.display = '';
+    revertBtn.style.display = 'none';
+    note.innerHTML = `Z-score blend of Your · ESPN · 2025 · ADP — weights tunable below.`;
+  }
+  renderWeightSliders();
+}
+
+function renderWeightSliders(){
+  const c = el('weightSliders');
+  if (!c) return;
+  const w = getCompositeWeights();
+  const sources = [
+    ['your', 'Your CSV'],
+    ['espn', 'ESPN'],
+    ['last', '2025'],
+    ['adp',  'ADP']
+  ];
+  c.innerHTML = sources.map(([k, label]) => {
+    const pct = Math.round((w[k] || 0) * 100);
+    return `<div class="ws-row">
+      <label>${label}</label>
+      <input type="range" min="0" max="100" step="1" value="${pct}" data-ws="${k}" />
+      <span class="ws-val">${pct}%</span>
+    </div>`;
+  }).join('');
+  c.querySelectorAll('input[data-ws]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const k = e.target.dataset.ws;
+      const val = parseInt(e.target.value, 10) / 100;
+      const nw = {...getCompositeWeights()};
+      nw[k] = val;
+      // Auto-normalize so weights sum to 1
+      const total = Object.values(nw).reduce((a,b)=>a+b, 0);
+      if (total > 0){
+        for (const key in nw) nw[key] = nw[key] / total;
+      }
+      state.compositeWeights = nw;
+      computeCompositeRanks();
+      // If composite is currently active, re-apply with new weights
+      if (state.compositeActive){
+        for (const p of state.players){
+          if (p.compositeRank != null) p.rank = p.compositeRank;
+        }
+      }
+      render();
+    });
+  });
 }
 
 function renderHeader(){
@@ -1300,15 +1866,27 @@ function renderRoster(){
   el('rosterCount').textContent = r.length;
   const list = el('rosterList');
   if (!r.length){ list.innerHTML = '<div class="muted" style="font-size:12px">No picks yet.</div>'; return; }
+  // Bye-stacking detection — count starters per bye week (top picks at each position only)
+  const byeCounts = {};
+  for (const p of r){
+    if (p.bye) byeCounts[p.bye] = (byeCounts[p.bye] || 0) + 1;
+  }
+  let byeWarning = '';
+  for (const week in byeCounts){
+    if (byeCounts[week] >= 3){
+      byeWarning += `<div class="bye-warn">⚠ ${byeCounts[week]} of your players share Week ${week} bye — that week could hurt.</div>`;
+    }
+  }
   // group by position
   const grouped = {};
   for (const p of r){ (grouped[p.pos] = grouped[p.pos]||[]).push(p); }
-  let html = '';
+  let html = byeWarning;
   for (const pos of POS_ORDER){
     if (!grouped[pos]) continue;
     for (const p of grouped[pos]){
       const pickInfo = state.picks.find(x=>x.playerId===p.id);
-      html += `<div class="roster-row"><span class="player-cell">${avatarHTML(p,'sm')}<span class="pos ${p.pos}">${p.pos}</span> ${p.name}</span><span class="muted">R${pickInfo.round}.${String(((pickInfo.overall-1)%state.teams)+1).padStart(2,'0')}</span></div>`;
+      const byeTag = p.bye ? `<span class="bye-tag" title="Bye week">B${p.bye}</span>` : '';
+      html += `<div class="roster-row"><span class="player-cell">${avatarHTML(p,'sm')}<span class="pos ${p.pos}">${p.pos}</span> ${p.name}${byeTag}</span><span class="muted">R${pickInfo.round}.${String(((pickInfo.overall-1)%state.teams)+1).padStart(2,'0')}</span></div>`;
     }
   }
   list.innerHTML = html;
@@ -1360,8 +1938,8 @@ function renderTargets(){
     const benchClamp = Math.min(benchTarget, benchHave);
     const pct = benchTarget ? Math.min(100, (benchClamp/benchTarget)*100) : 0;
     html += `<div class="target-row" title="Depth — any position">
-      <span><span class="pos" style="background:#3a4663;color:#e6ecf5;padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:700">BENCH</span></span>
-      <div class="progress"><div class="fill" style="width:${pct}%;background:#3a4663"></div></div>
+      <span><span class="pos" style="background:var(--muted);color:var(--bg);padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:700">BENCH</span></span>
+      <div class="progress"><div class="fill" style="width:${pct}%;background:var(--muted)"></div></div>
       <span class="row" style="gap:4px"><b>${benchHave}</b><span class="muted">/</span>
         <input type="number" min="0" max="10" value="${benchTarget}" data-target-pos="BENCH" />
       </span>
@@ -1408,6 +1986,9 @@ function renderAvailable(){
   const POS_PRIORITY = {QB:1, RB:2, WR:3, TE:4, DEF:5, K:6};
   const cur = currentOverall();
   const espnOf = p => (p.espnRank != null ? p.espnRank : 999);
+  const lastOf = p => (p.lastFinish != null ? p.lastFinish : 999);
+  const compOf = p => (p.compositeRank != null ? p.compositeRank : 999);
+  const byeOf  = p => (p.bye != null ? p.bye : 99);
   const sortFns = {
     rank:  (a,b) => a.rank - b.rank,
     name:  (a,b) => a.name.localeCompare(b.name),
@@ -1415,7 +1996,11 @@ function renderAvailable(){
     adp:   (a,b) => a.adp - b.adp,
     delta: (a,b) => (a.adp - a.rank) - (b.adp - b.rank),
     espn:  (a,b) => espnOf(a) - espnOf(b),
-    espnDelta: (a,b) => ((espnOf(a) - a.rank) - (espnOf(b) - b.rank))
+    espnDelta: (a,b) => ((espnOf(a) - a.rank) - (espnOf(b) - b.rank)),
+    last:  (a,b) => lastOf(a) - lastOf(b),
+    lastDelta: (a,b) => ((lastOf(b) - b.rank) - (lastOf(a) - a.rank)),  // descending: highest "wake up" deltas first
+    comp:  (a,b) => compOf(a) - compOf(b),
+    bye:   (a,b) => byeOf(a) - byeOf(b)
   };
   const cmp = sortFns[state.sortCol] || sortFns.rank;
   list.sort((a,b) => state.sortDir === 'desc' ? cmp(b,a) : cmp(a,b));
@@ -1433,19 +2018,21 @@ function renderAvailable(){
   // detect tier breaks (gap of >= 6 rank within same position)
   const lastRankByPos = {};
   let html = '';
-  // Compute position-relative tier per player. Tier 1 = top 12 within position, Tier 2 = 13-24, etc.
-  // Used for the left tier-band color and tier number badge. Respects manual override.
+  // CROSS-POSITION tier system.
+  // Priority: user override → CSV "Tier" column → auto from overall-rank brackets.
+  // Tiers represent overall draft value; draft within a tier before moving to the next.
   const tierForPlayer = (p) => {
     if (state.tierOverride && state.tierOverride[p.id]) return state.tierOverride[p.id];
-    const allAtPos = state.players.filter(x => x.pos === p.pos).sort((a,b)=>a.rank-b.rank);
-    const idx = allAtPos.findIndex(x => x.id === p.id);
-    const tierSize = (p.pos==='QB'||p.pos==='TE'||p.pos==='DEF'||p.pos==='K') ? 6 : 12;
-    return Math.floor(idx / tierSize) + 1;
+    if (p.tier) return p.tier;
+    return autoTierFromRank(p.rank);
   };
 
   // Whose turn is it right now? — used to label the single Draft button correctly.
   const onClockSlot = pickToSlot(cur, state.teams).slot;
   const onClockLabel = onClockSlot === state.slot ? 'Me' : `T${onClockSlot}`;
+
+  // Track the previous row's tier so we can mark tier-break boundaries.
+  let prevTier = null;
 
   for (const p of list){
     const delta = p.adp - p.rank; // positive = falling (still here past ADP)
@@ -1455,37 +2042,47 @@ function renderAvailable(){
     else if (adpDeltaFromPick <= -8) flagHtml = `<span class="pill warn">REACH ${adpDeltaFromPick.toFixed(0)}</span>`;
     if (p.rank <= 30 && cur > p.rank + 4) flagHtml += ` <span class="pill bad">TIER</span>`;
 
-    const tierBreak = lastRankByPos[p.pos] && (p.rank - lastRankByPos[p.pos]) >= 8 ? 'tier-break' : '';
     lastRankByPos[p.pos] = p.rank;
     const dw = state.dontWant[p.id] ? 'dont-want' : '';
     const targeted = state.target && state.target[p.id] ? 'targeted' : '';
     const tier = tierForPlayer(p);
+    const cappedTier = Math.min(Math.max(tier, 1), 8);
+    // Tier-break: row starts a new tier — only when list is sorted by rank (so visual makes sense)
+    const tierStartCls = (prevTier !== null && tier !== prevTier && state.sortCol === 'rank') ? `tier-start tier-start-${cappedTier}` : '';
+    prevTier = tier;
     const espn = p.espnRank;
     const espnDelta = (espn != null) ? (espn - p.rank) : null;  // positive = ESPN drafts later → you can wait
-    html += `<tr class="${dw} ${targeted} ${tierBreak} tier-band-${Math.min(tier,5)}" data-row-id="${p.id}">
+    html += `<tr class="${dw} ${targeted} tier-band-${cappedTier} ${tierStartCls}" data-row-id="${p.id}">
       <td>
         <div class="rank-cell">
           <button class="rank-btn" data-bump="${p.id}" data-dir="-1" title="Move up (better rank)">▲</button>
           <button class="rank-btn" data-bump="${p.id}" data-dir="1" title="Move down (worse rank)">▼</button>
-          <span class="tier-num" data-tier-edit="${p.id}" title="Click to edit tier">T${tier}</span>
+          <span class="tier-num t${cappedTier}" data-tier-edit="${p.id}" title="Click to edit tier">T${tier}</span>
           <span>${p.rank}</span>
         </div>
       </td>
-      <td><div class="player-cell">${avatarHTML(p)}<b class="pname">${p.name}</b>${state.target&&state.target[p.id]?' <span title="Target">⭐</span>':''}</div></td>
+      <td><div class="player-cell">${avatarHTML(p)}<b class="pname">${p.name}</b>${state.target&&state.target[p.id]?' <span title="Target">⭐</span>':''}${state.queue.indexOf(p.id)>=0?` <span class="queue-badge" title="In your queue">📋#${state.queue.indexOf(p.id)+1}</span>`:''}${state.notes&&state.notes[p.id]?' <span class="note-badge" title="'+state.notes[p.id].replace(/"/g,'&quot;')+'">📝</span>':''}</div></td>
       <td><span class="pos ${p.pos}">${p.pos}</span></td>
+      <td class="${p.compositeRank==null?'muted':''}" title="${p.compositeSources?'Blend of: '+p.compositeSources.join(', ')+(p.compositeSpread!=null?' · spread ±'+p.compositeSpread:''):''}">${p.compositeRank==null?'—':p.compositeRank}${p.compositeSpread!=null && p.compositeSources && p.compositeSources.length>=2 ? `<span class="spread-pill ${p.compositeSpread>=15?'wide':p.compositeSpread>=6?'med':'tight'}">±${p.compositeSpread}</span>` : ''}</td>
       <td>${p.adp.toFixed(1)}</td>
       <td class="${espn==null?'muted':''}">${espn==null?'—':espn}</td>
       <td class="${espnDelta==null?'muted':espnDelta>0?'delta-pos':espnDelta<0?'delta-neg':''}">${espnDelta==null?'—':(espnDelta>0?'+':'')+espnDelta}</td>
+      <td class="${p.bye==null?'muted':''}" title="${p.team?'Team: '+p.team:''}">${p.bye==null?'—':p.bye}</td>
+      <td class="${p.lastFinish==null?'muted':''}" title="${p.lastFpts!=null?p.lastFpts+' pts in 2025':''}">${p.lastFinish==null?'—':p.lastFinish}</td>
+      <td class="${p.lastFinish==null?'muted':(p.lastFinish - p.rank)>=8?'delta-pos':(p.lastFinish - p.rank)<=-8?'delta-neg':''}" title="2025 finish vs your rank — positive = market sleeping on proven producer; negative = bust risk">${p.lastFinish==null?'—':((p.lastFinish-p.rank)>=0?'+':'')+(p.lastFinish-p.rank)}</td>
       <td class="${delta>0?'delta-pos':delta<0?'delta-neg':''}">${delta>0?'+':''}${delta.toFixed(1)}</td>
       <td>${flagHtml}</td>
       <td class="row-actions">
         <button class="primary" data-draft="${p.id}" title="Draft to current pick (${onClockLabel})">Draft</button>
+        <button class="ghost" data-queue="${p.id}" title="Add to my queue">${state.queue.includes(p.id)?'➖':'➕'}</button>
         <button class="ghost" data-toggle-target="${p.id}" title="Mark as Target">${state.target&&state.target[p.id]?'★':'☆'}</button>
         <button class="ghost" data-toggle-dw="${p.id}" title="Don't want / Fade">${state.dontWant[p.id]?'↺':'🚫'}</button>
+        <button class="ghost" data-compare="${p.id}" title="Compare (pick 2)">${state.compareSel && state.compareSel.includes(p.id) ? '✓⚖' : '⚖'}</button>
+        <button class="ghost" data-note="${p.id}" title="${state.notes[p.id] ? 'Edit note' : 'Add note'}">📝</button>
       </td>
     </tr>`;
   }
-  el('availBody').innerHTML = html || '<tr><td colspan="9" class="empty">No matching players.</td></tr>';
+  el('availBody').innerHTML = html || '<tr><td colspan="13" class="empty">No matching players.</td></tr>';
 
   el('availBody').querySelectorAll('[data-draft]').forEach(b=>{
     b.addEventListener('click', e=>logPick(e.currentTarget.dataset.draft));
@@ -1498,11 +2095,45 @@ function renderAvailable(){
       render();
     });
   });
+  el('availBody').querySelectorAll('[data-queue]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const id = e.currentTarget.dataset.queue;
+      const idx = state.queue.indexOf(id);
+      if (idx >= 0) state.queue.splice(idx, 1);
+      else state.queue.push(id);
+      render();
+    });
+  });
   el('availBody').querySelectorAll('[data-toggle-dw]').forEach(b=>{
     b.addEventListener('click', e=>{
       const id = e.currentTarget.dataset.toggleDw;
       if (state.dontWant[id]) delete state.dontWant[id]; else state.dontWant[id] = true;
       render();
+    });
+  });
+  el('availBody').querySelectorAll('[data-note]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const id = e.currentTarget.dataset.note;
+      const p = state.players.find(x => x.id === id);
+      const cur = state.notes[id] || '';
+      const v = prompt(`Notes on ${p ? p.name : 'player'} (saved locally):`, cur);
+      if (v === null) return;
+      if (v.trim() === '') delete state.notes[id]; else state.notes[id] = v.trim();
+      render();
+    });
+  });
+  el('availBody').querySelectorAll('[data-compare]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const id = e.currentTarget.dataset.compare;
+      if (!state.compareSel) state.compareSel = [];
+      const i = state.compareSel.indexOf(id);
+      if (i >= 0) state.compareSel.splice(i, 1);
+      else {
+        state.compareSel.push(id);
+        if (state.compareSel.length > 2) state.compareSel.shift();
+      }
+      if (state.compareSel.length === 2) openCompareView();
+      else render();
     });
   });
   // ↑/↓ rank bump — swap ranks with adjacent player
@@ -1681,6 +2312,7 @@ function renderRecs(sig){
         ${pillFor('VALUE', b.value, 25)}
         ${pillFor('RANK', b.rank, 25)}
         ${pillFor('SCARCE', b.scarcity, 20)}
+        ${b.production ? pillFor('PROD', b.production, 20) : ''}
       </div>
       <div class="pc-section pros">
         <div class="pc-label">Pros</div>
@@ -1825,6 +2457,357 @@ function renderPickInput(sig){
   const {round, slot} = pickToSlot(cur, state.teams);
   const isMine = slot === state.slot;
   el('currentPickLabel').textContent = `R${round}.${String(((cur-1)%state.teams)+1).padStart(2,'0')} (Pick ${cur}, ${isMine?'YOUR PICK':`Team ${slot}`})`;
+}
+
+// Detect position runs: 3+ of last 5 picks at the same position triggers an alert.
+// Populate the glossary panel content once on init
+function buildGlossary(){
+  const panel = el('glossaryPanel');
+  if (!panel) return;
+  panel.innerHTML = `
+    <button class="gl-pin" id="glossaryPin" title="Pin open (click to toggle)">📌 pin</button>
+    <h3>Available Players Columns</h3>
+    <dl>
+      <dt>Rk</dt><dd>Your CSV rank (or composite if Use Composite is active). Up/down arrows reorder; click <b>T#</b> to edit tier.</dd>
+      <dt>Comp</dt><dd>Synthesized rank — z-score weighted blend of Your_Rank, ADP, ESPN, 2025 finish. <b>±X</b> = how much sources disagree.</dd>
+      <dt>ADP</dt><dd>Average Draft Position from real mock drafts (market consensus pick #).</dd>
+      <dt>ESPN</dt><dd>ESPN platform's draft rank (upload via the optional ESPN CSV).</dd>
+      <dt>ΔE</dt><dd>Your rank − ESPN. <span style="color:var(--good)">Positive</span> = ESPN drafts them later, you can wait. <span style="color:var(--reach)">Negative</span> = ESPN reaches earlier.</dd>
+      <dt>Bye</dt><dd>2026 NFL bye week for that player's team.</dd>
+      <dt>'25</dt><dd>Where they finished in 2025 actual fantasy production. Hover for fpts.</dd>
+      <dt>ΔY</dt><dd>2025 finish − current rank. <span style="color:var(--good)">Positive</span> = market is sleeping on a proven producer.</dd>
+      <dt>Δ</dt><dd>ADP − Your_Rank. Positive = you ranked them higher than ADP.</dd>
+      <dt>Flag</dt><dd><b>FALL +N</b> = past ADP, value here. <b>REACH −N</b> = would be a reach. <b>TIER</b> = tier-break risk.</dd>
+    </dl>
+    <h3>Row Action Buttons</h3>
+    <dl>
+      <dt>Draft</dt><dd>Log this player to whoever is currently on the clock.</dd>
+      <dt>➕ / ➖</dt><dd>Add/remove from your pre-draft Queue.</dd>
+      <dt>☆ / ★</dt><dd>Mark as Target (boosts in AI scoring + visual highlight).</dd>
+      <dt>🚫 / ↺</dt><dd>Mark as Don't-Want / Fade (excludes from recommendations).</dd>
+      <dt>⚖</dt><dd>Add to Compare. Click on 2 players → side-by-side modal.</dd>
+      <dt>📝</dt><dd>Add a personal note (saved locally).</dd>
+    </dl>
+    <h3>Tier Color Bands (left edge of row)</h3>
+    <dl>
+      <dt>T1 Gold</dt><dd>Elite (overall ranks 1-8). Round 1 picks.</dd>
+      <dt>T2 Green</dt><dd>High-end starters (9-20).</dd>
+      <dt>T3 Blue</dt><dd>Solid starters (21-36). Round 3 territory.</dd>
+      <dt>T4 Purple</dt><dd>Strong starters (37-60).</dd>
+      <dt>T5 Amber</dt><dd>Mid-tier (61-84).</dd>
+      <dt>T6 Orange</dt><dd>Depth picks (85-108).</dd>
+      <dt>T7 Red</dt><dd>Late starters (109-132).</dd>
+      <dt>T8 Grey</dt><dd>Deep bench (133+).</dd>
+    </dl>
+    <p style="font-size:11px;margin:6px 0;color:var(--muted)">Tiers come from CSV column, manual override, or auto-bracket. Draft all players in a tier before moving down — tier breaks have thick colored top borders.</p>
+    <h3>Top-3 AI Picks — Score Pills</h3>
+    <dl>
+      <dt>NEED</dt><dd>0-30. How urgently you need this position (gap to target).</dd>
+      <dt>VALUE</dt><dd>−12 to +25. Current pick vs ADP. Positive = drafting later than ADP.</dd>
+      <dt>RANK</dt><dd>0-25. How close your rank is to the current pick number.</dd>
+      <dt>SCARCE</dt><dd>0-30. Tier drop + starter-tier emptying at their position before your next pick.</dd>
+      <dt>PROD</dt><dd>0-20. 2025 actual production credibility + sleeper bonus.</dd>
+    </dl>
+    <h3>Strategy Banner Types</h3>
+    <dl>
+      <dt>REACH</dt><dd>Take a position NOW — material drop expected before your next pick.</dd>
+      <dt>HOLD</dt><dd>Value at need positions still holds — take best available.</dd>
+      <dt>VALUE</dt><dd>A specific player has fallen significantly past their ADP.</dd>
+      <dt>PIVOT</dt><dd>Your secondary need is scarcer than your primary — switch focus.</dd>
+      <dt>🔥 RUN</dt><dd>3+ of last 5 picks were the same position. Other teams are racing for it.</dd>
+    </dl>
+    <h3>Pick Grades (on Draft Board + All Teams)</h3>
+    <dl>
+      <dt>A+</dt><dd>+10 or more value vs ADP (genuine steal).</dd>
+      <dt>A / A−</dt><dd>+5 to +9 / +2 to +4 value.</dd>
+      <dt>B+ / B</dt><dd>Fair value / small reach.</dd>
+      <dt>C / D / F</dt><dd>Notable reach / big reach / disaster.</dd>
+    </dl>
+    <h3>Roster Slots</h3>
+    <dl>
+      <dt>QB-K</dt><dd>Required starting positions you need to fill.</dd>
+      <dt>FLEX</dt><dd>RB / WR / TE — filled by any "extra" RWT after base targets.</dd>
+      <dt>Superflex</dt><dd>QB / RB / WR / TE — filled by any extra player at those positions.</dd>
+      <dt>Bench</dt><dd>Depth — any position.</dd>
+    </dl>
+    <h3>Other Signals</h3>
+    <dl>
+      <dt>🎯 YOU</dt><dd>Big pulsing pickbar means it's your turn now.</dd>
+      <dt>📋 #N</dt><dd>Player is at position N in your queue.</dd>
+      <dt>🔗 stack</dt><dd>WR/TE on your QB's team — stacking boom potential.</dd>
+      <dt>🛡 handcuff</dt><dd>Backup RB on same team as your RB — insurance pick.</dd>
+      <dt>⚠ Bye</dt><dd>3+ of your players share a bye week — that week will hurt.</dd>
+      <dt>±X</dt><dd>Composite spread. Low = sources agree (high confidence). High = volatile pick.</dd>
+    </dl>
+    <h3>Keyboard Shortcuts</h3>
+    <dl>
+      <dt>D / 1</dt><dd>Draft top AI pick.</dd>
+      <dt>2 / 3</dt><dd>Draft #2 / #3 AI pick.</dd>
+      <dt>U</dt><dd>Undo last pick (can chain).</dd>
+      <dt>Q</dt><dd>Add top AI pick to your queue.</dd>
+      <dt>?</dt><dd>Open shortcut help dialog.</dd>
+    </dl>
+  `;
+  // Wire pin button
+  el('glossaryPin').addEventListener('click', e => {
+    e.stopPropagation();
+    panel.classList.toggle('pinned');
+    el('glossaryPin').textContent = panel.classList.contains('pinned') ? '📌 pinned' : '📌 pin';
+  });
+}
+
+// Build and trigger print of a clean tier-grouped cheat sheet
+function buildAndPrint(){
+  if (!state.players.length){ alert('Load rankings first.'); return; }
+  const drafted = getDrafted();
+  const avail = state.players.filter(p => !drafted.has(p.id) && !state.dontWant[p.id]);
+  // Build tier groups (using current tier override or autoTier)
+  const tierGroups = {};
+  for (const p of avail.slice(0, 200).sort((a,b)=>a.rank-b.rank)){
+    const t = (state.tierOverride && state.tierOverride[p.id]) || (p.tier) || autoTierFromRank(p.rank);
+    (tierGroups[t] = tierGroups[t] || []).push(p);
+  }
+  const tierColors = ['#d4a017','#37b384','#3a7fd1','#7c3aed','#d4972e','#ea7330','#d63b4f','#7d8595'];
+  let html = '';
+  for (const t of Object.keys(tierGroups).sort((a,b)=>+a-+b)){
+    const color = tierColors[Math.min(+t-1, 7)] || '#888';
+    html += `<div class="tier-block">
+      <div class="tier-head" style="background:${color}">TIER ${t} · ${tierGroups[t].length} players</div>`;
+    for (const p of tierGroups[t]){
+      html += `<div class="ps-row">
+        <span class="ps-rank">${p.rank}</span>
+        <span class="ps-pos" style="background:${color}">${p.pos}</span>
+        <span class="pname">${p.name}${state.target&&state.target[p.id]?' ⭐':''}</span>
+        <span class="ps-meta">ADP ${p.adp.toFixed(0)}</span>
+        <span class="ps-meta">${p.bye?'B'+p.bye:''}</span>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  const fmt = SCORING_FORMATS[state.scoringFormat || 'ppr'];
+  el('printSubtitle').textContent = `${state.teams}-team · ${fmt.name} · slot ${state.slot} · generated ${new Date().toLocaleDateString()}`;
+  el('printBody').innerHTML = html;
+  // Show then trigger print
+  window.print();
+}
+
+function openCompareView(){
+  if (!state.compareSel || state.compareSel.length !== 2) return;
+  const [a, b] = state.compareSel.map(id => state.players.find(p => p.id === id));
+  if (!a || !b){ state.compareSel = []; render(); return; }
+  // Build comparison rows
+  const sig = strategySignals();
+  const recs = sig ? getRecs(sig) : [];
+  const aRec = recs.find(r => r.player.id === a.id);
+  const bRec = recs.find(r => r.player.id === b.id);
+
+  const rows = [
+    { lbl: 'Position',  a: `<span class="pos ${a.pos}">${a.pos}</span>`, b: `<span class="pos ${b.pos}">${b.pos}</span>`, lowerWins:false, skip:true },
+    { lbl: 'Team',      a: a.team || '—', b: b.team || '—', skip:true },
+    { lbl: 'Bye',       a: a.bye || '—', b: b.bye || '—', skip:true },
+    { lbl: 'Your Rank', a: a.rank, b: b.rank, lowerWins:true },
+    { lbl: 'ADP',       a: a.adp?.toFixed(1), b: b.adp?.toFixed(1), lowerWins:true },
+    { lbl: 'ESPN',      a: a.espnRank ?? '—', b: b.espnRank ?? '—', lowerWins:true },
+    { lbl: 'Composite', a: `${a.compositeRank ?? '—'}${a.compositeSpread!=null?` <span class="muted">±${a.compositeSpread}</span>`:''}`, b: `${b.compositeRank ?? '—'}${b.compositeSpread!=null?` <span class="muted">±${b.compositeSpread}</span>`:''}`, lowerWins:true, sortBy: (p)=>p.compositeRank ?? 999 },
+    { lbl: '2025 Finish', a: a.lastFinish ?? '—', b: b.lastFinish ?? '—', lowerWins:true, sortBy:(p)=>p.lastFinish ?? 999 },
+    { lbl: '2025 FPts', a: a.lastFpts ?? '—', b: b.lastFpts ?? '—', lowerWins:false, sortBy:(p)=>p.lastFpts ?? -1 },
+    { lbl: 'AI Score', a: aRec?.total?.toFixed(1) ?? '—', b: bRec?.total?.toFixed(1) ?? '—', lowerWins:false, sortBy:(p,r)=>r?.total ?? -1 }
+  ];
+
+  let html = `<div class="cmp-grid">
+    <div></div>
+    <div class="cmp-header">${avatarHTML(a,'lg')} ${a.name}</div>
+    <div class="cmp-header">${avatarHTML(b,'lg')} ${b.name}</div>`;
+  for (const r of rows){
+    let aCls = '', bCls = '';
+    if (!r.skip){
+      const aVal = r.sortBy ? r.sortBy(a, aRec) : (typeof r.a === 'number' ? r.a : parseFloat(String(r.a).replace(/[^\d.\-]/g,'')) || (r.lowerWins?999:-1));
+      const bVal = r.sortBy ? r.sortBy(b, bRec) : (typeof r.b === 'number' ? r.b : parseFloat(String(r.b).replace(/[^\d.\-]/g,'')) || (r.lowerWins?999:-1));
+      if (!isNaN(aVal) && !isNaN(bVal) && aVal !== bVal){
+        const aWins = r.lowerWins ? aVal < bVal : aVal > bVal;
+        if (aWins) aCls = 'winner';
+        else bCls = 'winner';
+      }
+    }
+    html += `<div class="cmp-row label">${r.lbl}</div>
+      <div class="cmp-row ${aCls}">${r.a}</div>
+      <div class="cmp-row ${bCls}">${r.b}</div>`;
+  }
+  // Pros/cons row
+  const aPros = aRec ? aRec.pros.slice(0,4).map(x=>`<div class="pc-item"><span style="color:var(--good)">✓</span> ${x}</div>`).join('') : '<div class="muted">—</div>';
+  const bPros = bRec ? bRec.pros.slice(0,4).map(x=>`<div class="pc-item"><span style="color:var(--good)">✓</span> ${x}</div>`).join('') : '<div class="muted">—</div>';
+  const aCons = aRec ? aRec.cons.slice(0,3).map(x=>`<div class="pc-item"><span style="color:var(--reach)">⚠</span> ${x}</div>`).join('') : '';
+  const bCons = bRec ? bRec.cons.slice(0,3).map(x=>`<div class="pc-item"><span style="color:var(--reach)">⚠</span> ${x}</div>`).join('') : '';
+  html += `<div class="cmp-row label">Pros</div><div class="cmp-row proscons">${aPros}</div><div class="cmp-row proscons">${bPros}</div>`;
+  html += `<div class="cmp-row label">Cons</div><div class="cmp-row proscons">${aCons || '<span class="muted">—</span>'}</div><div class="cmp-row proscons">${bCons || '<span class="muted">—</span>'}</div>`;
+  // Draft action buttons
+  html += `<div class="cmp-row label">Draft</div>
+    <div class="cmp-row"><button class="primary" data-cmp-draft="${a.id}">Draft ${a.name.split(' ').slice(-1)[0]}</button></div>
+    <div class="cmp-row"><button class="primary" data-cmp-draft="${b.id}">Draft ${b.name.split(' ').slice(-1)[0]}</button></div>`;
+  // Notes
+  if (state.notes[a.id] || state.notes[b.id]){
+    html += `<div class="cmp-row label">Notes</div>
+      <div class="cmp-row" style="font-size:11px;font-style:italic">${state.notes[a.id] || '—'}</div>
+      <div class="cmp-row" style="font-size:11px;font-style:italic">${state.notes[b.id] || '—'}</div>`;
+  }
+  html += '</div>';
+  el('compareBody').innerHTML = html;
+  el('compareBody').querySelectorAll('[data-cmp-draft]').forEach(b => {
+    b.addEventListener('click', e => {
+      const id = e.currentTarget.dataset.cmpDraft;
+      logPick(id);
+      state.compareSel = [];
+      el('compareOverlay').classList.remove('on');
+    });
+  });
+  el('compareOverlay').classList.add('on');
+}
+
+function renderPickHistory(){
+  const c = el('pickHistory');
+  if (!c) return;
+  el('pickHistCount').textContent = state.picks.length;
+  if (!state.picks.length){ c.innerHTML = '<div class="queue-empty">No picks yet.</div>'; return; }
+  // Show most-recent first
+  const reversed = [...state.picks].reverse();
+  c.innerHTML = reversed.map(pk => {
+    const player = state.players.find(p => p.id === pk.playerId);
+    if (!player) return '';
+    const g = pickGrade(pk.overall, player);
+    const isMe = pk.slot === state.slot;
+    return `<div class="hist-row ${isMe?'me':''}">
+      <span class="hist-pick">P${pk.overall} <span class="muted">R${pk.round}</span></span>
+      <span class="hist-team">T${pk.slot}${isMe?' ●':''}</span>
+      <span class="player-cell" style="flex:1">${avatarHTML(player,'sm')}<span class="pos ${player.pos}">${player.pos}</span> <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${player.name}</span></span>
+      <span class="grade-pill" style="color:${g.color}">${g.letter}</span>
+      <button class="qb-btn" data-rollback-to="${pk.overall}" title="Undo this and all later picks">↺</button>
+    </div>`;
+  }).join('');
+  c.querySelectorAll('[data-rollback-to]').forEach(b => b.addEventListener('click', e => {
+    const overall = +e.currentTarget.dataset.rollbackTo;
+    // Remove every pick at or after this overall
+    state.picks = state.picks.filter(p => p.overall < overall);
+    render();
+  }));
+}
+
+function renderQueue(){
+  const c = el('queueList');
+  if (!c) return;
+  // Filter to active queue: not drafted, not don't-want
+  const drafted = getDrafted();
+  state.queue = state.queue.filter(id => !drafted.has(id) && !state.dontWant[id]);
+  el('queueCount').textContent = state.queue.length;
+  if (!state.queue.length){
+    c.innerHTML = '<div class="queue-empty">No players queued yet.</div>';
+    el('draftQueueTop').style.display = 'none';
+    return;
+  }
+  el('draftQueueTop').style.display = '';
+  el('draftQueueTop').textContent = `⬆ Draft #1: ${state.players.find(p=>p.id===state.queue[0])?.name || ''}`;
+  c.innerHTML = state.queue.map((id, idx) => {
+    const p = state.players.find(x => x.id === id);
+    if (!p) return '';
+    return `<div class="queue-row">
+      <span class="q-num">${idx+1}</span>
+      <div class="q-name"><span class="pos ${p.pos}">${p.pos}</span> <span class="pname" title="${p.name}">${p.name}</span></div>
+      <div class="row" style="gap:2px">
+        <button class="qb-btn" data-q-up="${id}" ${idx===0?'disabled':''} title="Move up">▲</button>
+        <button class="qb-btn" data-q-down="${id}" ${idx===state.queue.length-1?'disabled':''} title="Move down">▼</button>
+      </div>
+      <button class="qb-btn" data-q-remove="${id}" title="Remove from queue">✕</button>
+    </div>`;
+  }).join('');
+  c.querySelectorAll('[data-q-up]').forEach(b => b.addEventListener('click', e => {
+    const i = state.queue.indexOf(e.currentTarget.dataset.qUp);
+    if (i > 0){ [state.queue[i-1], state.queue[i]] = [state.queue[i], state.queue[i-1]]; render(); }
+  }));
+  c.querySelectorAll('[data-q-down]').forEach(b => b.addEventListener('click', e => {
+    const i = state.queue.indexOf(e.currentTarget.dataset.qDown);
+    if (i < state.queue.length - 1){ [state.queue[i+1], state.queue[i]] = [state.queue[i], state.queue[i+1]]; render(); }
+  }));
+  c.querySelectorAll('[data-q-remove]').forEach(b => b.addEventListener('click', e => {
+    const i = state.queue.indexOf(e.currentTarget.dataset.qRemove);
+    if (i >= 0){ state.queue.splice(i, 1); render(); }
+  }));
+}
+
+// Stack: when user picks a QB, surface that team's WRs/TEs as stack opportunities.
+// Handcuff: when user picks an RB, surface other RBs on same team as handcuffs.
+function renderStackHandcuff(){
+  const wrap = el('stackHandcuffPanel');
+  if (!wrap) return;
+  const myRoster = getMyRoster();
+  if (!myRoster.length){ wrap.style.display = 'none'; return; }
+  const drafted = getDrafted();
+  const suggestions = [];
+  // Look at my drafted QBs and RBs
+  for (const p of myRoster){
+    if (!p.team && !p.lastFinish) continue;  // need some team signal
+    // Try to derive team — we have it in lastFpts baseline but only when matched
+    const baseline = findBaselineFor(p.name, p.pos);
+    const myTeam = baseline ? baseline[2] : null;
+    if (!myTeam) continue;
+    if (p.pos === 'QB'){
+      // Find WR/TE on the same team
+      for (const cand of state.players){
+        if (drafted.has(cand.id)) continue;
+        if (cand.pos !== 'WR' && cand.pos !== 'TE') continue;
+        const cb = findBaselineFor(cand.name, cand.pos);
+        if (cb && cb[2] === myTeam){
+          suggestions.push({ kind: 'stack', anchor: p, target: cand });
+        }
+      }
+    }
+    if (p.pos === 'RB'){
+      for (const cand of state.players){
+        if (drafted.has(cand.id)) continue;
+        if (cand.pos !== 'RB' || cand.id === p.id) continue;
+        const cb = findBaselineFor(cand.name, cand.pos);
+        if (cb && cb[2] === myTeam){
+          suggestions.push({ kind: 'handcuff', anchor: p, target: cand });
+        }
+      }
+    }
+  }
+  // Dedupe target players
+  const seen = new Set();
+  const unique = suggestions.filter(s => {
+    if (seen.has(s.target.id)) return false;
+    seen.add(s.target.id);
+    return true;
+  }).slice(0, 6);
+  if (!unique.length){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const c = el('stackHandcuffList');
+  c.innerHTML = unique.map(s => `<div class="roster-row">
+    <span class="player-cell">${avatarHTML(s.target,'sm')}<span class="pos ${s.target.pos}">${s.target.pos}</span> ${s.target.name}</span>
+    <span class="muted" style="font-size:11px">${s.kind === 'stack' ? '🔗 stack w/' : '🛡 handcuff to'} ${s.anchor.name.split(' ').slice(-1)[0]}</span>
+  </div>`).join('');
+}
+
+function renderRunAlert(){
+  const wrap = el('runAlert');
+  if (!wrap) return;
+  const lastN = state.picks.slice(-5);
+  if (lastN.length < 3){ wrap.style.display = 'none'; return; }
+  const counts = {};
+  for (const pk of lastN){
+    const player = state.players.find(p => p.id === pk.playerId);
+    if (!player) continue;
+    counts[player.pos] = (counts[player.pos]||0) + 1;
+  }
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if (!top || top[1] < 3){ wrap.style.display = 'none'; return; }
+  const [pos, count] = top;
+  // How many starter-tier players remain at that position?
+  const sig = strategySignals();
+  const remaining = sig?.scarcity?.[pos]?.startersLeft;
+  const tierTotal = sig?.scarcity?.[pos]?.tierTotal;
+  wrap.style.display = 'block';
+  el('runAlertHeadline').textContent = `🔥 ${pos} RUN — ${count} of last ${lastN.length} picks were ${pos}`;
+  const leftStr = (remaining != null && tierTotal) ? ` · ${remaining}/${tierTotal} starter-tier ${pos}s left` : '';
+  el('runAlertWhy').textContent = `Other teams are racing for ${pos}.${leftStr} Consider grabbing one this pick if you need one.`;
 }
 
 function renderEndOfDraft(){
@@ -2081,6 +3064,18 @@ function updateWizardTotal(){
     roundsEl.value = total;
   }
 }
+function applyTheme(){
+  const t = state.theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  const btn = el('themeBtn');
+  if (btn) btn.textContent = t === 'light' ? '☀️' : '🌙';
+}
+function toggleTheme(){
+  state.theme = (state.theme === 'light') ? 'dark' : 'light';
+  applyTheme();
+  saveState();
+}
+
 function openWizard(){
   el('wizSlot').value = state.slot;
   el('wizTeams').value = state.teams;
@@ -2095,6 +3090,7 @@ function openWizard(){
   el('wizDEF').value = state.targets.DEF ?? 1;
   el('wizK').value = state.targets.K ?? 1;
   el('wizBENCH').value = state.targets.BENCH ?? 6;
+  el('wizScoringFormat').value = state.scoringFormat || 'ppr';
   updateWizardTotal();
   el('wizOverlay').classList.add('on');
 }
@@ -2119,7 +3115,11 @@ function launchFromWizard(){
     K: Math.max(0, +el('wizK').value || 0),
     BENCH: Math.max(0, +el('wizBENCH').value || 0)
   };
+  state.scoringFormat = el('wizScoringFormat').value || 'ppr';
   state.setupDone = true;
+  // Re-attach baseline using new scoring format
+  attach2025Baseline();
+  computeCompositeRanks();
   closeWizard();
   render();
 }
@@ -2130,11 +3130,146 @@ function loadCSVText(text){
     alert('CSV has no data rows.');
     return;
   }
+  // Detect NFL play-by-play data (nflverse) and aggregate into rankings
+  if (isPlayByPlayCSV(raw.headers)){
+    el('dataStatus').innerHTML = `<span style="color:var(--accent)">Detected NFL play-by-play data — aggregating season stats (this can take a few seconds for large files)…</span>`;
+    setTimeout(() => {
+      try {
+        const csv = aggregatePBPtoRankings(raw);
+        const inner = parseCSVRaw(csv);
+        csvRaw = inner;
+        csvMapping = {...inner.autoMap};
+        applyMappingAndLoad();
+        renderColumnMapping();
+        // Append a context note to status
+        const cur = el('dataStatus').textContent;
+        el('dataStatus').innerHTML = cur + ' <span style="color:var(--muted)">(from play-by-play — positions classified by usage; correct any TE/WR mix-ups via the position-specific upload below)</span>';
+      } catch(e){
+        console.error(e);
+        el('dataStatus').innerHTML = `<span style="color:var(--bad)">PBP aggregation failed: ${e.message}</span>`;
+      }
+    }, 50);
+    return;
+  }
   csvRaw = raw;
   csvMapping = {...raw.autoMap};
   applyMappingAndLoad();
   renderColumnMapping();
 }
+
+// Detect nflverse/pbp-style CSV by signature columns
+function isPlayByPlayCSV(headers){
+  const lower = headers.map(h => h.toLowerCase());
+  const sig = ['play_id','posteam','passer_player_name','rusher_player_name','receiver_player_name'];
+  return sig.every(s => lower.includes(s));
+}
+
+// Aggregate play-by-play data into per-player season stats (1 PPR scoring) and
+// emit a CSV that the existing rankings pipeline can consume.
+function aggregatePBPtoRankings(raw){
+  const lower = raw.headers.map(h => h.toLowerCase());
+  const col = name => lower.indexOf(name);
+  // Required cols
+  const c = {
+    play_type:   col('play_type'),
+    yards_gained: col('yards_gained'),
+    pass_td:     col('pass_touchdown'),
+    rush_td:     col('rush_touchdown'),
+    interception: col('interception'),
+    fumble_lost: col('fumble_lost'),
+    complete_pass: col('complete_pass'),
+    passer:      col('passer_player_name'),
+    passing_yards: col('passing_yards'),
+    rusher:      col('rusher_player_name'),
+    rushing_yards: col('rushing_yards'),
+    receiver:    col('receiver_player_name'),
+    receiving_yards: col('receiving_yards'),
+    posteam:     col('posteam')
+  };
+  // Per-player accumulator
+  const stats = {}; // name -> { team, passAtt, passYds, passTD, intThrown, rushAtt, rushYds, rushTD, fumLost, rec, recYds, recTD }
+  function getP(name, team){
+    if (!stats[name]) stats[name] = {
+      name, team: team || '',
+      passAtt:0, passYds:0, passTD:0, intThrown:0,
+      rushAtt:0, rushYds:0, rushTD:0, fumLost:0,
+      rec:0, recYds:0, recTD:0
+    };
+    if (team && !stats[name].team) stats[name].team = team;
+    return stats[name];
+  }
+  const n = raw.rows.length;
+  for (let i = 0; i < n; i++){
+    const r = raw.rows[i];
+    const playType = r[c.play_type];
+    if (!playType) continue;
+    const team = r[c.posteam] || '';
+
+    if (playType === 'pass'){
+      const passer = r[c.passer];
+      if (passer && passer !== 'NA'){
+        const p = getP(passer, team);
+        p.passAtt++;
+        p.passYds += (+r[c.passing_yards]) || 0;
+        if ((+r[c.pass_td]) > 0) p.passTD++;
+        if ((+r[c.interception]) > 0) p.intThrown++;
+        if ((+r[c.fumble_lost]) > 0) p.fumLost++;
+      }
+      // Receiver — only complete passes count for receptions
+      const receiver = r[c.receiver];
+      if (receiver && receiver !== 'NA' && (+r[c.complete_pass]) > 0){
+        const p = getP(receiver, team);
+        p.rec++;
+        p.recYds += (+r[c.receiving_yards]) || 0;
+        if ((+r[c.pass_td]) > 0) p.recTD++;
+      }
+    } else if (playType === 'run'){
+      const rusher = r[c.rusher];
+      if (rusher && rusher !== 'NA'){
+        const p = getP(rusher, team);
+        p.rushAtt++;
+        p.rushYds += (+r[c.rushing_yards]) || (+r[c.yards_gained]) || 0;
+        if ((+r[c.rush_td]) > 0) p.rushTD++;
+        if ((+r[c.fumble_lost]) > 0) p.fumLost++;
+      }
+    }
+  }
+  // Compute fantasy points (1 PPR) + classify position
+  const players = [];
+  for (const name in stats){
+    const p = stats[name];
+    // 1 PPR scoring
+    const fpts =
+      (p.passYds * 0.04) + (p.passTD * 4) + (p.intThrown * -2) +
+      (p.rushYds * 0.10) + (p.rushTD * 6) + (p.fumLost * -2) +
+      (p.rec * 1)         + (p.recYds * 0.10) + (p.recTD * 6);
+    // Position classification
+    let pos;
+    if (p.passAtt >= 50) pos = 'QB';
+    else if (p.rushAtt > p.rec * 1.4) pos = 'RB';
+    else if (p.rec >= 5 || p.recYds > 50) pos = 'WR';
+    else if (p.rushAtt >= 10) pos = 'RB';
+    else continue; // too few snaps to bother — skip
+    // PBP doesn't distinguish WR vs TE — user fixes via position-specific upload
+    players.push({ name: cleanName(name), pos, fpts: Math.max(0, fpts), team: p.team });
+  }
+  // Sort by fpts and assign overall rank
+  players.sort((a,b) => b.fpts - a.fpts);
+  // Build CSV
+  const lines = ['Player,Position,Your_Rank,ADP'];
+  players.slice(0, 250).forEach((p, idx) => {
+    // Use rank as a stand-in for ADP since PBP has no ADP data
+    lines.push(`"${p.name.replace(/"/g,'""')}",${p.pos},${idx+1},${(idx+1).toFixed(1)}`);
+  });
+  return lines.join('\n');
+}
+
+// nflverse uses shortened names like "P.Nacua" — try to expand if possible.
+function cleanName(name){
+  // Strip quotes/whitespace
+  return String(name).replace(/^"|"$/g,'').trim();
+}
+
 
 // Position-specific re-ranking — keeps the slot positions in the overall list,
 // just shuffles which player fills which slot. e.g., WR slots 1,3,8 stay WR slots
@@ -2201,6 +3336,131 @@ function loadPosSpecificText(text, forcedPos){
   render();
 }
 
+// ========================================================================
+// PDF rankings extractor — pdf.js extracts text, then we heuristically parse
+// player rows. Output is a CSV string that flows through the regular pipeline.
+// ========================================================================
+async function extractPdfText(file){
+  if (typeof pdfjsLib === 'undefined'){
+    alert('PDF library failed to load. Check your internet connection and refresh.');
+    return null;
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const lines = [];
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    // Group text items into lines by Y position
+    const byLine = {};
+    for (const item of content.items){
+      const y = Math.round(item.transform[5]);
+      (byLine[y] = byLine[y] || []).push({x: item.transform[4], text: item.str});
+    }
+    // Sort lines top-to-bottom (PDF Y is bottom-up so higher = earlier)
+    const ys = Object.keys(byLine).map(Number).sort((a,b)=>b-a);
+    for (const y of ys){
+      const parts = byLine[y].sort((a,b) => a.x - b.x).map(p => p.text);
+      const line = parts.join(' ').replace(/\s+/g,' ').trim();
+      if (line) lines.push(line);
+    }
+  }
+  return lines;
+}
+
+// Parse extracted PDF lines into player rows. Returns array of {name, pos, rank, adp}.
+function parsePdfLines(lines){
+  // Common patterns:
+  //   "1. Puka Nacua WR LAR 2.9"
+  //   "1 Puka Nacua (WR) 2.9"
+  //   "WR1 Ja'Marr Chase CIN 1.2"
+  //   "Puka Nacua WR 2.9"  (no rank — derive from order)
+  const POS_RE = '(?:QB|RB|WR|TE|DEF|DST|K|PK)';
+  const TEAM_RE = '(?:[A-Z]{2,4})'; // 2-4 letter NFL team code (NO, LAR, etc.)
+  const NUM_RE = '\\d+(?:\\.\\d+)?';
+  // Regex tries (most-strict first):
+  const patterns = [
+    // 1. Puka Nacua WR LAR 2.9
+    new RegExp(`^(?<rank>\\d+)[.)]?\\s+(?<name>[A-Z][A-Za-z'.\\-\\s]+?)\\s+(?<pos>${POS_RE})\\s+(?:${TEAM_RE}\\s+)?(?<adp>${NUM_RE})?\\s*$`),
+    // 1 Puka Nacua (WR) 2.9
+    new RegExp(`^(?<rank>\\d+)[.)]?\\s+(?<name>[A-Z][A-Za-z'.\\-\\s]+?)\\s*[\\(\\[](?<pos>${POS_RE})[\\)\\]]\\s*(?<adp>${NUM_RE})?\\s*$`),
+    // WR1 Ja'Marr Chase CIN  (positional rank prefix)
+    new RegExp(`^(?<pos>${POS_RE})(?<posrank>\\d+)\\s+(?<name>[A-Z][A-Za-z'.\\-\\s]+?)(?:\\s+${TEAM_RE})?(?:\\s+(?<adp>${NUM_RE}))?\\s*$`),
+    // Puka Nacua WR LAR 2.9  (no overall rank — derive from order)
+    new RegExp(`^(?<name>[A-Z][A-Za-z'.\\-\\s]+?)\\s+(?<pos>${POS_RE})\\s+(?:${TEAM_RE}\\s+)?(?<adp>${NUM_RE})?\\s*$`)
+  ];
+  const out = [];
+  let derivedRank = 0;
+  for (const raw of lines){
+    // Skip clearly non-row lines (headers, page numbers, fluff)
+    if (raw.length < 6 || raw.length > 200) continue;
+    if (!/[A-Z]/.test(raw)) continue;
+    let matched = null;
+    let usedDerived = false;
+    for (let pi = 0; pi < patterns.length; pi++){
+      const m = patterns[pi].exec(raw);
+      if (m && m.groups && m.groups.name){
+        matched = m.groups;
+        // For pattern 2 (WR1 prefix), invent an overall rank as derived (positional rank isn't enough)
+        if (pi === 2 || !matched.rank){
+          derivedRank++;
+          matched.rank = String(derivedRank);
+          usedDerived = (pi !== 2);
+        }
+        break;
+      }
+    }
+    if (!matched) continue;
+    const name = matched.name.trim().replace(/\s{2,}/g,' ');
+    if (name.split(' ').length < 2) continue; // ignore single-word "names"
+    const pos = normalizePos(matched.pos.toUpperCase());
+    const rank = parseFloat(matched.rank);
+    const adp = matched.adp ? parseFloat(matched.adp) : NaN;
+    if (!name || !pos || isNaN(rank)) continue;
+    if (usedDerived) derivedRank++; // we already incremented above when picking
+    out.push({ name, pos, rank, adp: isNaN(adp) ? rank + 5 : adp });
+  }
+  // Deduplicate by name+pos (keep first / best rank)
+  const seen = new Map();
+  for (const r of out){
+    const key = r.name.toLowerCase() + '|' + r.pos;
+    if (!seen.has(key) || r.rank < seen.get(key).rank) seen.set(key, r);
+  }
+  return [...seen.values()].sort((a,b) => a.rank - b.rank);
+}
+
+// Convert parsed PDF rows into CSV text so existing pipeline handles it
+function pdfRowsToCSV(rows){
+  const header = 'Player,Position,Your_Rank,ADP';
+  const lines = [header];
+  for (const r of rows){
+    lines.push(`"${r.name.replace(/"/g,'""')}",${r.pos},${r.rank},${r.adp.toFixed(1)}`);
+  }
+  return lines.join('\n');
+}
+
+async function loadPDF(file){
+  el('dataStatus').innerHTML = `<span style="color:var(--accent)">Reading PDF…</span>`;
+  try {
+    const lines = await extractPdfText(file);
+    if (!lines || !lines.length){
+      el('dataStatus').innerHTML = `<span style="color:var(--bad)">Couldn't extract text from PDF (might be a scanned image)</span>`;
+      return;
+    }
+    const rows = parsePdfLines(lines);
+    if (!rows.length){
+      el('dataStatus').innerHTML = `<span style="color:var(--bad)">Parsed PDF but couldn't detect player rows. Try a different file or CSV.</span>`;
+      return;
+    }
+    const csv = pdfRowsToCSV(rows);
+    loadCSVText(csv);
+    el('dataStatus').textContent = `${rows.length} players parsed from PDF (${file.name}).`;
+  } catch (e){
+    console.error(e);
+    el('dataStatus').innerHTML = `<span style="color:var(--bad)">PDF parse failed: ${e.message}</span>`;
+  }
+}
+
 // ESPN second-CSV — only Player + ESPN-rank columns needed.
 function loadEspnText(text){
   const raw = parseCSVRaw(text);
@@ -2242,6 +3502,7 @@ function loadEspnText(text){
     }
   }
   el('espnStatus').textContent = `${matched} of ${state.players.length} players matched`;
+  computeCompositeRanks();
   render();
 }
 
@@ -2265,7 +3526,11 @@ function applyMappingAndLoad(){
   state.players = players;
   state.picks = [];
   state.dontWant = {};
-  el('dataStatus').textContent = `${players.length} players loaded from ${csvRaw.headers.length}-column CSV.`;
+  state.compositeActive = false;
+  const matched = attach2025Baseline();
+  computeCompositeRanks();
+  const baselineNote = matched ? ` · ${matched} matched to 2025 production` : '';
+  el('dataStatus').textContent = `${players.length} players loaded from ${csvRaw.headers.length}-column CSV.${baselineNote}`;
   render();
 }
 
@@ -2279,6 +3544,7 @@ function renderColumnMapping(){
     ['pos',   'Position',    true],
     ['rank',  'Your Rank',   true],
     ['adp',   'ADP',         true],
+    ['tier',  'Tier',        false],
     ['photo', 'Photo URL',   false]
   ];
   const rowsEl = el('colMapRows');
@@ -2317,6 +3583,16 @@ function wire(){
   el('teams').addEventListener('change', e=>{ state.teams = Math.max(6, Math.min(20, +e.target.value)); render(); });
   el('rounds').addEventListener('change', e=>{ state.rounds = Math.max(10, Math.min(22, +e.target.value)); render(); });
   el('undoBtn').addEventListener('click', ()=>{ state.picks.pop(); render(); });
+  el('themeBtn').addEventListener('click', toggleTheme);
+  el('compareClose').addEventListener('click', ()=>{
+    el('compareOverlay').classList.remove('on');
+    state.compareSel = [];
+    render();
+  });
+  el('helpBtn').addEventListener('click', ()=>{
+    alert('Keyboard shortcuts:\n\nD or 1 — Draft Top AI pick\n2 — Draft #2 AI pick\n3 — Draft #3 AI pick\nU — Undo last pick\nQ — Queue top AI recommendation\n? — Show this help');
+  });
+  el('printBtn').addEventListener('click', buildAndPrint);
   el('resetBtn').addEventListener('click', ()=>{ if(confirm('Reset draft picks?')){ state.picks=[]; render(); } });
 
   // Setup wizard
@@ -2359,6 +3635,21 @@ function wire(){
   el('sampleBtn').addEventListener('click', ()=>loadCSVText(SAMPLE_CSV));
   el('reapplyMap').addEventListener('click', ()=>applyMappingAndLoad());
   el('exportCsv').addEventListener('click', exportRankingsCSV);
+  el('useCompositeBtn').addEventListener('click', applyComposite);
+  el('revertCompositeBtn').addEventListener('click', revertComposite);
+  el('draftQueueTop').addEventListener('click', ()=>{
+    if (state.queue.length) logPick(state.queue[0]);
+  });
+  el('resetWeights').addEventListener('click', ()=>{
+    state.compositeWeights = {...DEFAULT_COMPOSITE_WEIGHTS};
+    computeCompositeRanks();
+    if (state.compositeActive){
+      for (const p of state.players){
+        if (p.compositeRank != null) p.rank = p.compositeRank;
+      }
+    }
+    render();
+  });
   // ESPN CSV
   el('espnFile').addEventListener('change', e=>{
     const f = e.target.files[0]; if (!f) return;
@@ -2380,21 +3671,25 @@ function wire(){
     reader.readAsText(f);
     e.target.value = ''; // reset so re-upload works
   });
-  el('file').addEventListener('change', e=>{
-    const f = e.target.files[0]; if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => loadCSVText(reader.result);
-    reader.readAsText(f);
-  });
+  // Route file to CSV or PDF handler based on extension / MIME
+  function handleRankingsFile(f){
+    if (!f) return;
+    const isPdf = /\.pdf$/i.test(f.name) || f.type === 'application/pdf';
+    if (isPdf){
+      loadPDF(f);
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => loadCSVText(reader.result);
+      reader.readAsText(f);
+    }
+  }
+  el('file').addEventListener('change', e=>{ handleRankingsFile(e.target.files[0]); e.target.value = ''; });
   const drop = el('drop');
   drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
   drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
   drop.addEventListener('drop', e=>{
     e.preventDefault(); drop.classList.remove('over');
-    const f = e.dataTransfer.files[0]; if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => loadCSVText(reader.result);
-    reader.readAsText(f);
+    handleRankingsFile(e.dataTransfer.files[0]);
   });
 
   el('manualPickBtn').addEventListener('click', ()=>{
@@ -2410,6 +3705,29 @@ function wire(){
 }
 
 wire();
+applyTheme();
+buildGlossary();
+
+// Keyboard shortcuts: D=draft top AI pick, 1/2/3=draft Top-3 #N, U=undo, Q=queue top rec, ?=help
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const sig = strategySignals();
+  const recs = sig ? getRecs(sig) : [];
+  const k = e.key.toLowerCase();
+  if (k === 'd' && recs[0]) { logPick(recs[0].player.id); e.preventDefault(); }
+  else if (k === '1' && recs[0]) { logPick(recs[0].player.id); e.preventDefault(); }
+  else if (k === '2' && recs[1]) { logPick(recs[1].player.id); e.preventDefault(); }
+  else if (k === '3' && recs[2]) { logPick(recs[2].player.id); e.preventDefault(); }
+  else if (k === 'u') { state.picks.pop(); render(); e.preventDefault(); }
+  else if (k === 'q' && recs[0]) {
+    if (!state.queue.includes(recs[0].player.id)) state.queue.push(recs[0].player.id);
+    render(); e.preventDefault();
+  } else if (k === '?' || k === '/') {
+    alert('Keyboard shortcuts:\n\nD or 1 — Draft Top AI pick\n2 — Draft #2 AI pick\n3 — Draft #3 AI pick\nU — Undo last pick\nQ — Queue top AI recommendation\n? — Show this help');
+    e.preventDefault();
+  }
+});
 if (!state.players.length){
   render();
 } else {
