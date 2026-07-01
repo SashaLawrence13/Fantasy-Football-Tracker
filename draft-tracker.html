@@ -3708,6 +3708,83 @@ wire();
 applyTheme();
 buildGlossary();
 
+// ============================================================
+// ESPN BRIDGE — listen for picks/setup pushed by the Chrome extension,
+// and send back the top AI recommendation so the extension can highlight
+// it in ESPN's player list.
+// ============================================================
+function findPlayerByName(name){
+  if (!name || !state.players) return null;
+  const norm = s => String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/\b(jr|sr|ii|iii|iv|v)\b/g,'').replace(/--+/g,'-').replace(/^-|-$/g,'');
+  const targetId = norm(name);
+  let p = state.players.find(x => x.id === targetId);
+  if (p) return p;
+  // Fuzzy: last-name + first-initial
+  const parts = name.replace(/[.,]/g,'').split(/\s+/).filter(Boolean);
+  if (parts.length >= 2){
+    const fi = parts[0][0].toLowerCase();
+    const last = parts[parts.length-1].toLowerCase();
+    p = state.players.find(x => {
+      const xp = x.name.split(/\s+/);
+      return xp[0][0].toLowerCase() === fi && xp[xp.length-1].toLowerCase().startsWith(last);
+    });
+    if (p) return p;
+  }
+  // Substring match on last name
+  if (parts.length){
+    const last = parts[parts.length-1].toLowerCase();
+    p = state.players.find(x => x.name.toLowerCase().includes(last));
+  }
+  return p || null;
+}
+
+window.addEventListener('message', (e) => {
+  const msg = e.data;
+  if (!msg || typeof msg !== 'object' || !msg.type) return;
+  if (msg.type === 'ESPN_PICK'){
+    const player = findPlayerByName(msg.player);
+    if (player){
+      const drafted = getDrafted();
+      if (!drafted.has(player.id)) logPick(player.id);
+    }
+  } else if (msg.type === 'ESPN_SETUP'){
+    let changed = false;
+    if (msg.teams && msg.teams !== state.teams){ state.teams = msg.teams; changed = true; }
+    if (msg.scoring && msg.scoring !== state.scoringFormat){
+      state.scoringFormat = msg.scoring;
+      attach2025Baseline();
+      computeCompositeRanks();
+      changed = true;
+    }
+    if (changed){ state.setupDone = true; render(); }
+  }
+});
+
+// After every render, push the current top recommendation back up
+const _origRender = render;
+render = function(){
+  _origRender();
+  try {
+    const sig = strategySignals();
+    const recs = sig ? getRecs(sig) : [];
+    if (recs.length){
+      const recMsg = {
+        type: 'TRACKER_REC',
+        topPick: recs[0].player.name,
+        pos: recs[0].player.pos,
+        score: recs[0].total
+      };
+      // Embedded (iframe) mode: post up to the parent window.
+      if (window.parent && window.parent !== window){
+        window.parent.postMessage(recMsg, '*');
+      }
+      // Standalone-tab mode (Option A): post to our own window so the
+      // extension's tracker content script can relay it to ESPN.
+      window.postMessage(recMsg, '*');
+    }
+  } catch(e){}
+};
+
 // Keyboard shortcuts: D=draft top AI pick, 1/2/3=draft Top-3 #N, U=undo, Q=queue top rec, ?=help
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
